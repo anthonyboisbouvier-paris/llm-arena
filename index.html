@@ -15,6 +15,370 @@
       display: inline-flex;
       align-items: center;
     }
+    
+    /* Battle Animation Overlay */
+    .battle-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      background: 
+        repeating-linear-gradient(
+          45deg,
+          rgba(101, 67, 33, 0.03) 0px,
+          rgba(101, 67, 33, 0.03) 2px,
+          transparent 2px,
+          transparent 4px
+        ),
+        radial-gradient(ellipse at center, 
+          rgba(139, 69, 19, 0.4) 0%,
+          rgba(101, 67, 33, 0.6) 40%,
+          rgba(42, 42, 42, 0.95) 100%
+        ),
+        linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .battle-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+    
+    .battle-arena {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .battle-arena::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      border: 4px solid rgba(139, 69, 19, 0.6);
+      background: radial-gradient(circle at center,
+        rgba(101, 67, 33, 0.1) 0%,
+        rgba(139, 69, 19, 0.15) 50%,
+        transparent 100%
+      );
+      box-shadow: 
+        0 0 40px rgba(218, 165, 32, 0.3),
+        inset 0 0 80px rgba(139, 69, 19, 0.3),
+        inset 0 0 20px rgba(218, 165, 32, 0.2);
+      animation: battleArenaGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes battleArenaGlow {
+      0%, 100% { 
+        box-shadow: 
+          0 0 40px rgba(218, 165, 32, 0.3),
+          inset 0 0 80px rgba(139, 69, 19, 0.3),
+          inset 0 0 20px rgba(218, 165, 32, 0.2);
+      }
+      50% { 
+        box-shadow: 
+          0 0 60px rgba(218, 165, 32, 0.5),
+          inset 0 0 100px rgba(139, 69, 19, 0.4),
+          inset 0 0 40px rgba(218, 165, 32, 0.3);
+      }
+    }
+    
+    .battle-gladiator {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: battleFloat 3s ease-in-out infinite;
+    }
+    
+    @keyframes battleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    .battle-gladiator.left {
+      left: 20%;
+      top: 55%;
+      animation-delay: 0s;
+    }
+    
+    .battle-gladiator.center {
+      left: 50%;
+      top: 22%;
+      transform: translateX(-50%);
+      animation-delay: 0.5s;
+    }
+    
+    .battle-gladiator.right {
+      right: 20%;
+      top: 55%;
+      animation-delay: 1s;
+    }
+    
+    .battle-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      animation: battleGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes battleGlow {
+      0%, 100% {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5),
+                    0 0 20px rgba(255, 255, 255, 0.2);
+      }
+      50% {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5),
+                    0 0 40px rgba(255, 255, 255, 0.4);
+      }
+    }
+    
+    .battle-gladiator.left .battle-avatar {
+      background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+    }
+    
+    .battle-gladiator.center .battle-avatar {
+      background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%);
+    }
+    
+    .battle-gladiator.right .battle-avatar {
+      background: linear-gradient(135deg, #cc785c 0%, #a0614a 100%);
+    }
+    
+    .battle-text {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 50px;
+      font-weight: 900;
+      color: #daa520;
+      text-shadow: 0 0 20px rgba(218, 165, 32, 0.8),
+                   0 4px 8px rgba(0, 0, 0, 0.8);
+      animation: battlePulse 1.5s ease-in-out infinite;
+      z-index: 5;
+      font-family: 'Georgia', serif;
+      letter-spacing: 6px;
+    }
+    
+    @keyframes battlePulse {
+      0%, 100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.8;
+      }
+      50% { 
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 1;
+      }
+    }
+    
+    .battle-name {
+      margin-top: 8px;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .battle-message {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #daa520;
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      font-family: 'Georgia', serif;
+    }
+    
+    /* Mini Arena - Home Page Preview */
+    .mini-arena {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto 30px;
+    }
+    
+    .mini-arena-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 3px solid rgba(139, 69, 19, 0.4);
+      background: radial-gradient(circle at center,
+        rgba(101, 67, 33, 0.05) 0%,
+        rgba(139, 69, 19, 0.1) 50%,
+        transparent 100%
+      );
+      box-shadow: 
+        0 0 30px rgba(218, 165, 32, 0.2),
+        inset 0 0 50px rgba(139, 69, 19, 0.2);
+      animation: miniArenaGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes miniArenaGlow {
+      0%, 100% { 
+        box-shadow: 
+          0 0 30px rgba(218, 165, 32, 0.2),
+          inset 0 0 50px rgba(139, 69, 19, 0.2);
+      }
+      50% { 
+        box-shadow: 
+          0 0 40px rgba(218, 165, 32, 0.3),
+          inset 0 0 60px rgba(139, 69, 19, 0.3);
+      }
+    }
+    
+    .mini-gladiator {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: miniFloat 3s ease-in-out infinite;
+    }
+    
+    /* Position 5 LLMs in a circle */
+    .mini-gladiator.mini-pos-1 {
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      animation-delay: 0s;
+    }
+    
+    .mini-gladiator.mini-pos-2 {
+      right: 20px;
+      top: 65px;
+      animation-delay: 0.2s;
+    }
+    
+    .mini-gladiator.mini-pos-3 {
+      right: 35px;
+      bottom: 45px;
+      animation-delay: 0.4s;
+    }
+    
+    .mini-gladiator.mini-pos-4 {
+      left: 35px;
+      bottom: 45px;
+      animation-delay: 0.6s;
+    }
+    
+    .mini-gladiator.mini-pos-5 {
+      left: 20px;
+      top: 65px;
+      animation-delay: 0.8s;
+    }
+    
+    .mini-avatar {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+      animation: miniGlow 2s ease-in-out infinite;
+      margin-bottom: 4px;
+    }
+    
+    .mini-avatar.mini-gpt {
+      background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+    }
+    
+    .mini-avatar.mini-gemini {
+      background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%);
+    }
+    
+    .mini-avatar.mini-claude {
+      background: linear-gradient(135deg, #cc785c 0%, #a0614a 100%);
+    }
+    
+    .mini-avatar.mini-mistral {
+      background: linear-gradient(135deg, #ff7000 0%, #d15a00 100%);
+    }
+    
+    .mini-avatar.mini-llama {
+      background: linear-gradient(135deg, #5436da 0%, #3d24a8 100%);
+    }
+    
+    .mini-health-bar {
+      width: 40px;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    
+    .mini-health-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      transition: width 0.3s ease-out;
+    }
+    
+    .mini-name {
+      font-size: 9px;
+      font-weight: bold;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    @keyframes miniFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.03); }
+    }
+    
+    .mini-gladiator.mini-pos-1 {
+      animation: miniFloatCenter 3s ease-in-out infinite;
+    }
+    
+    @keyframes miniFloatCenter {
+      0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+      50% { transform: translateX(-50%) translateY(-3px) scale(1.03); }
+    }
+    
+    @keyframes miniGlow {
+      0%, 100% {
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3),
+                    0 0 8px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3),
+                    0 0 15px rgba(255, 255, 255, 0.25);
+      }
+    }
+    
+    /* Tooltip styles */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
     .tooltip-trigger {
       cursor: help;
       display: inline-flex;
@@ -68,6 +432,29 @@
 </head>
 <body class="bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 min-h-screen">
   <div id="root"></div>
+  
+  <!-- Battle Animation Overlay -->
+  <div id="battleOverlay" class="battle-overlay">
+    <div class="battle-arena">
+      <div class="battle-text">FIGHTING</div>
+      <div class="battle-message" id="battleMsg">⚔️ Models entering the arena...</div>
+      
+      <div class="battle-gladiator left">
+        <div class="battle-avatar">🛡️</div>
+        <div class="battle-name">GPT</div>
+      </div>
+      
+      <div class="battle-gladiator center">
+        <div class="battle-avatar">⚔️</div>
+        <div class="battle-name">Gemini</div>
+      </div>
+      
+      <div class="battle-gladiator right">
+        <div class="battle-avatar">🗡️</div>
+        <div class="battle-name">Claude</div>
+      </div>
+    </div>
+  </div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
@@ -237,6 +624,17 @@
           textarea.focus();
         }
       }, [result]);
+      
+      // Initialize Mini Arena after component mounts
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          if (window.MiniArena) {
+            console.log('Initializing MiniArena...');
+            window.MiniArena.init();
+          }
+        }, 200);
+        return () => clearTimeout(timer);
+      }, []);
 
       // Example prompts - designed to show meaningful differences between models
       const examplePrompts = [
@@ -300,6 +698,11 @@
         setError(null);
         setResult(null);
 
+        // Show battle animation with combat
+        if (window.BattleArena) {
+          window.BattleArena.show();
+        }
+
         // Scroll to top after state update to see progress
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -327,6 +730,12 @@
           }
 
           const html = await response.text();
+          
+          // Hide battle animation
+          if (window.BattleArena) {
+            window.BattleArena.hide();
+          }
+          
           setResult(html);
           
           // Smooth scroll to results after a short delay
@@ -334,6 +743,11 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }, 300);
         } catch (err) {
+          // Hide battle animation on error
+          if (window.BattleArena) {
+            window.BattleArena.hide();
+          }
+          
           setError(`Error: ${err.message}`);
           // Auto-dismiss error after 8 seconds
           setTimeout(() => setError(null), 8000);
@@ -356,6 +770,46 @@
             <p className="text-xl text-gray-700 font-semibold mb-6">
               Where Language Models Battle for Glory
             </p>
+            
+            {/* Mini Arena Preview with 5 LLMs */}
+            <div className="mini-arena">
+              <div className="mini-gladiator mini-pos-1">
+                <div className="mini-avatar mini-gpt">🛡️</div>
+                <div className="mini-health-bar">
+                  <div className="mini-health-fill" id="miniHealth1"></div>
+                </div>
+                <div className="mini-name">GPT</div>
+              </div>
+              <div className="mini-gladiator mini-pos-2">
+                <div className="mini-avatar mini-gemini">⚔️</div>
+                <div className="mini-health-bar">
+                  <div className="mini-health-fill" id="miniHealth2"></div>
+                </div>
+                <div className="mini-name">Gemini</div>
+              </div>
+              <div className="mini-gladiator mini-pos-3">
+                <div className="mini-avatar mini-claude">🗡️</div>
+                <div className="mini-health-bar">
+                  <div className="mini-health-fill" id="miniHealth3"></div>
+                </div>
+                <div className="mini-name">Claude</div>
+              </div>
+              <div className="mini-gladiator mini-pos-4">
+                <div className="mini-avatar mini-mistral">⚡</div>
+                <div className="mini-health-bar">
+                  <div className="mini-health-fill" id="miniHealth4"></div>
+                </div>
+                <div className="mini-name">Mistral</div>
+              </div>
+              <div className="mini-gladiator mini-pos-5">
+                <div className="mini-avatar mini-llama">🦙</div>
+                <div className="mini-health-bar">
+                  <div className="mini-health-fill" id="miniHealth5"></div>
+                </div>
+                <div className="mini-name">Llama</div>
+              </div>
+              <div className="mini-arena-circle"></div>
+            </div>
 
             {/* Why it's useful */}
             <div className="max-w-3xl mx-auto mb-10 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border-2 border-orange-200 shadow-lg">
@@ -927,6 +1381,393 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
+  </script>
+  
+  <script>
+    // Battle Arena Combat System
+    window.BattleArena = {
+      overlay: null,
+      arena: null,
+      gladiators: [],
+      messageInterval: null,
+      combatInterval: null,
+      
+      init() {
+        this.overlay = document.getElementById('battleOverlay');
+        this.arena = document.querySelector('.battle-arena');
+        this.gladiators = [
+          { 
+            element: document.querySelector('.battle-gladiator.left'),
+            name: 'GPT',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.battle-gladiator.center'),
+            name: 'Gemini',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.battle-gladiator.right'),
+            name: 'Claude',
+            hp: 100
+          }
+        ];
+      },
+      
+      show() {
+        if (!this.overlay) this.init();
+        
+        // Reset HP
+        this.gladiators.forEach(g => g.hp = 100);
+        
+        this.overlay.classList.add('active');
+        this.startCombat();
+        this.startMessages();
+      },
+      
+      hide() {
+        if (this.overlay) {
+          this.overlay.classList.remove('active');
+        }
+        if (this.messageInterval) {
+          clearInterval(this.messageInterval);
+        }
+        if (this.combatInterval) {
+          clearInterval(this.combatInterval);
+        }
+      },
+      
+      startMessages() {
+        const battleMessage = document.getElementById('battleMsg');
+        const messages = [
+          '⚔️ Models entering the arena...',
+          '🎯 Evaluating responses...',
+          '⚖️ Judges deliberating...',
+          '🏆 Calculating rankings...'
+        ];
+        let idx = 0;
+        
+        if (battleMessage) {
+          this.messageInterval = setInterval(() => {
+            idx = (idx + 1) % messages.length;
+            battleMessage.textContent = messages[idx];
+          }, 2500);
+        }
+      },
+      
+      startCombat() {
+        let attackCount = 0;
+        const maxAttacks = 15;
+        
+        this.combatInterval = setInterval(() => {
+          if (attackCount >= maxAttacks) {
+            clearInterval(this.combatInterval);
+            return;
+          }
+          
+          const alive = this.gladiators.filter(g => g.hp > 0);
+          if (alive.length < 2) {
+            clearInterval(this.combatInterval);
+            return;
+          }
+          
+          const attacker = alive[Math.floor(Math.random() * alive.length)];
+          const targets = alive.filter(g => g !== attacker);
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          
+          this.attack(attacker, target);
+          attackCount++;
+        }, 1200);
+      },
+      
+      attack(attacker, target) {
+        this.createBeam(attacker.element, target.element);
+        
+        setTimeout(() => {
+          const damage = 15 + Math.random() * 25;
+          target.hp = Math.max(0, target.hp - damage);
+          
+          const targetRect = target.element.getBoundingClientRect();
+          this.createExplosion(
+            targetRect.left + targetRect.width / 2,
+            targetRect.top + targetRect.height / 2
+          );
+        }, 250);
+      },
+      
+      createBeam(attackerEl, targetEl) {
+        const beam = document.createElement('div');
+        beam.style.cssText = `
+          position: fixed;
+          height: 6px;
+          background: linear-gradient(90deg, 
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 215, 0, 1) 50%,
+            rgba(255, 165, 0, 0) 100%
+          );
+          border-radius: 3px;
+          box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+          opacity: 0;
+          z-index: 10000;
+          pointer-events: none;
+        `;
+        
+        const aRect = attackerEl.getBoundingClientRect();
+        const tRect = targetEl.getBoundingClientRect();
+        
+        const aX = aRect.left + aRect.width / 2;
+        const aY = aRect.top + aRect.height / 2;
+        const tX = tRect.left + tRect.width / 2;
+        const tY = tRect.top + tRect.height / 2;
+        
+        const deltaX = tX - aX;
+        const deltaY = tY - aY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        
+        beam.style.left = aX + 'px';
+        beam.style.top = aY + 'px';
+        beam.style.width = '0px';
+        beam.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+        beam.style.transformOrigin = 'left center';
+        
+        document.body.appendChild(beam);
+        
+        setTimeout(() => {
+          beam.style.transition = 'width 0.3s ease-out, opacity 0.3s';
+          beam.style.opacity = '1';
+          beam.style.width = distance + 'px';
+        }, 10);
+        
+        setTimeout(() => beam.style.opacity = '0', 300);
+        setTimeout(() => beam.remove(), 500);
+      },
+      
+      createExplosion(x, y) {
+        const explosion = document.createElement('div');
+        explosion.style.cssText = `
+          position: fixed;
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: radial-gradient(circle, 
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 165, 0, 0.8) 30%,
+            rgba(255, 0, 0, 0) 70%
+          );
+          left: ${x - 40}px;
+          top: ${y - 40}px;
+          opacity: 0;
+          transform: scale(0);
+          pointer-events: none;
+          z-index: 10000;
+        `;
+        
+        document.body.appendChild(explosion);
+        
+        setTimeout(() => {
+          explosion.style.transition = 'all 0.4s ease-out';
+          explosion.style.opacity = '1';
+          explosion.style.transform = 'scale(1.5)';
+        }, 10);
+        
+        setTimeout(() => explosion.style.opacity = '0', 250);
+        setTimeout(() => explosion.remove(), 450);
+      }
+    };
+  </script>
+  
+  <script>
+    // Mini Arena - 5 LLMs Battle Royale with HP
+    window.MiniArena = {
+      gladiators: [],
+      combatInterval: null,
+      
+      init() {
+        this.gladiators = [
+          { 
+            element: document.querySelector('.mini-gladiator.mini-pos-1'),
+            healthBar: document.getElementById('miniHealth1'),
+            name: 'GPT',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.mini-gladiator.mini-pos-2'),
+            healthBar: document.getElementById('miniHealth2'),
+            name: 'Gemini',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.mini-gladiator.mini-pos-3'),
+            healthBar: document.getElementById('miniHealth3'),
+            name: 'Claude',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.mini-gladiator.mini-pos-4'),
+            healthBar: document.getElementById('miniHealth4'),
+            name: 'Mistral',
+            hp: 100
+          },
+          { 
+            element: document.querySelector('.mini-gladiator.mini-pos-5'),
+            healthBar: document.getElementById('miniHealth5'),
+            name: 'Llama',
+            hp: 100
+          }
+        ];
+        
+        if (this.gladiators[0].element) {
+          this.startCombat();
+        }
+      },
+      
+      startCombat() {
+        let attackCount = 0;
+        
+        this.combatInterval = setInterval(() => {
+          const alive = this.gladiators.filter(g => g.hp > 0);
+          
+          // Reset if only one or zero alive
+          if (alive.length <= 1) {
+            this.gladiators.forEach(g => {
+              g.hp = 100;
+              if (g.healthBar) g.healthBar.style.width = '100%';
+            });
+            attackCount = 0;
+            return;
+          }
+          
+          // Random attack
+          const attacker = alive[Math.floor(Math.random() * alive.length)];
+          const targets = alive.filter(g => g !== attacker);
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          
+          this.attack(attacker, target);
+          attackCount++;
+        }, 1400);
+      },
+      
+      attack(attacker, target) {
+        this.shootBeam(attacker.element, target.element);
+        
+        setTimeout(() => {
+          // Apply damage
+          const damage = 12 + Math.random() * 20;
+          target.hp = Math.max(0, target.hp - damage);
+          
+          // Update health bar
+          if (target.healthBar) {
+            target.healthBar.style.width = target.hp + '%';
+            
+            // Color based on HP
+            if (target.hp > 60) {
+              target.healthBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)';
+            } else if (target.hp > 30) {
+              target.healthBar.style.background = 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)';
+            } else {
+              target.healthBar.style.background = 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)';
+            }
+          }
+          
+          // Explosion
+          const targetRect = target.element.getBoundingClientRect();
+          this.createExplosion(
+            targetRect.left + targetRect.width / 2,
+            targetRect.top + targetRect.height / 2
+          );
+        }, 280);
+      },
+      
+      shootBeam(fromEl, toEl) {
+        const beam = document.createElement('div');
+        beam.style.cssText = `
+          position: fixed;
+          height: 6px;
+          background: linear-gradient(90deg, 
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 215, 0, 1) 40%,
+            rgba(255, 140, 0, 0.8) 80%,
+            rgba(255, 69, 0, 0) 100%
+          );
+          border-radius: 3px;
+          box-shadow: 
+            0 0 15px rgba(255, 215, 0, 1),
+            0 0 30px rgba(255, 165, 0, 0.6),
+            0 0 5px rgba(255, 255, 255, 0.8);
+          opacity: 0;
+          z-index: 10000;
+          pointer-events: none;
+        `;
+        
+        const fromRect = fromEl.getBoundingClientRect();
+        const toRect = toEl.getBoundingClientRect();
+        
+        const fromX = fromRect.left + fromRect.width / 2;
+        const fromY = fromRect.top + fromRect.height / 2;
+        const toX = toRect.left + toRect.width / 2;
+        const toY = toRect.top + toRect.height / 2;
+        
+        const deltaX = toX - fromX;
+        const deltaY = toY - fromY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        
+        beam.style.left = fromX + 'px';
+        beam.style.top = fromY + 'px';
+        beam.style.width = '0px';
+        beam.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+        beam.style.transformOrigin = 'left center';
+        
+        document.body.appendChild(beam);
+        
+        setTimeout(() => {
+          beam.style.transition = 'width 0.25s ease-out, opacity 0.25s';
+          beam.style.opacity = '1';
+          beam.style.width = distance + 'px';
+        }, 10);
+        
+        setTimeout(() => beam.style.opacity = '0', 250);
+        setTimeout(() => beam.remove(), 450);
+      },
+      
+      createExplosion(x, y) {
+        const exp = document.createElement('div');
+        exp.style.cssText = `
+          position: fixed;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: radial-gradient(circle, 
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 215, 0, 0.9) 20%,
+            rgba(255, 140, 0, 0.7) 40%,
+            rgba(255, 69, 0, 0.4) 60%,
+            rgba(255, 0, 0, 0) 80%
+          );
+          box-shadow: 
+            0 0 30px rgba(255, 165, 0, 0.8),
+            0 0 50px rgba(255, 140, 0, 0.5);
+          left: ${x - 25}px;
+          top: ${y - 25}px;
+          opacity: 0;
+          transform: scale(0);
+          pointer-events: none;
+          z-index: 10001;
+        `;
+        
+        document.body.appendChild(exp);
+        
+        setTimeout(() => {
+          exp.style.transition = 'all 0.3s ease-out';
+          exp.style.opacity = '1';
+          exp.style.transform = 'scale(1.5)';
+        }, 10);
+        
+        setTimeout(() => exp.style.opacity = '0', 200);
+        setTimeout(() => exp.remove(), 350);
+      }
+    };
   </script>
 </body>
 </html>
