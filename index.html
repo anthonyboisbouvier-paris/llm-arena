@@ -8,509 +8,715 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cinzel: ['Cinzel', 'Georgia', 'serif'],
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    /* Tooltip styles */
-    .tooltip-container {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
+    body, button, input, textarea, select { font-family: 'Inter', system-ui, sans-serif; }
+    body { background: #080604; overflow-x: hidden; }
+
+    /* ===== COLOSSEUM GATE ENTRANCE ===== */
+    .gate-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; pointer-events: none;
     }
-    
-    /* Battle Animation Overlay */
-    .battle-overlay {
-      position: fixed;
-      top: 0;
+    .gate-left, .gate-right {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1);
+      pointer-events: auto;
+    }
+    .gate-left {
+      background: linear-gradient(135deg, #1a0f06 0%, #0d0804 100%);
+      border-right: 3px solid #8b4513;
+      transform: translateX(0);
+    }
+    .gate-right {
+      background: linear-gradient(225deg, #1a0f06 0%, #0d0804 100%);
+      border-left: 3px solid #8b4513;
+      transform: translateX(0);
+    }
+    .gate-overlay.opening .gate-left { transform: translateX(-100%); }
+    .gate-overlay.opening .gate-right { transform: translateX(100%); }
+    .gate-overlay.done { display: none; }
+    .gate-emblem {
+      font-size: 80px; margin-bottom: 12px;
+      animation: gateEmblemPulse 2s ease-in-out infinite;
+    }
+    @keyframes gateEmblemPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(218,165,32,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(218,165,32,0.6)); }
+    }
+    .gate-text {
+      font-family: 'Cinzel', serif; color: #daa520; font-size: 14px;
+      letter-spacing: 0.4em; text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(218,165,32,0.5);
+    }
+    /* Gate stone texture */
+    .gate-left::before, .gate-right::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.05;
+      background: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(139,69,19,0.3) 40px, rgba(139,69,19,0.3) 41px),
+                  repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(139,69,19,0.2) 60px, rgba(139,69,19,0.2) 61px);
+    }
+
+    /* ===== SAND PARTICLES CANVAS ===== */
+    .sand-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.7;
+    }
+
+    /* ===== TORCH FLICKER EDGES ===== */
+    .torch-left, .torch-right {
+      position: fixed; top: 0; bottom: 0; width: 120px; pointer-events: none; z-index: 2;
+    }
+    .torch-left {
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 9999;
-      background: 
-        repeating-linear-gradient(
-          45deg,
-          rgba(101, 67, 33, 0.03) 0px,
-          rgba(101, 67, 33, 0.03) 2px,
-          transparent 2px,
-          transparent 4px
-        ),
-        radial-gradient(ellipse at center, 
-          rgba(139, 69, 19, 0.4) 0%,
-          rgba(101, 67, 33, 0.6) 40%,
-          rgba(42, 42, 42, 0.95) 100%
-        ),
-        linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-      display: none;
-      opacity: 0;
-      transition: opacity 0.5s ease-in-out;
+      background: linear-gradient(90deg, rgba(218,165,32,0.04) 0%, transparent 100%);
+      animation: torchFlicker 3s ease-in-out infinite;
     }
-    
-    .battle-overlay.active {
-      display: block;
-      opacity: 1;
+    .torch-right {
+      right: 0;
+      background: linear-gradient(270deg, rgba(218,165,32,0.04) 0%, transparent 100%);
+      animation: torchFlicker 3s ease-in-out infinite 1.5s;
     }
-    
-    .battle-arena {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
+    @keyframes torchFlicker {
+      0%, 100% { opacity: 0.3; }
+      25% { opacity: 0.8; }
+      50% { opacity: 0.4; }
+      75% { opacity: 1; }
     }
-    
-    .battle-arena::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 500px;
-      height: 500px;
-      border-radius: 50%;
-      border: 4px solid rgba(139, 69, 19, 0.6);
-      background: radial-gradient(circle at center,
-        rgba(101, 67, 33, 0.1) 0%,
-        rgba(139, 69, 19, 0.15) 50%,
-        transparent 100%
-      );
-      box-shadow: 
-        0 0 40px rgba(218, 165, 32, 0.3),
-        inset 0 0 80px rgba(139, 69, 19, 0.3),
-        inset 0 0 20px rgba(218, 165, 32, 0.2);
-      animation: battleArenaGlow 3s ease-in-out infinite;
+
+    /* ===== HERO SECTION ===== */
+    .hero-section {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; position: relative;
+      background: radial-gradient(ellipse at center bottom, rgba(42,24,16,0.6) 0%, rgba(8,6,4,0.95) 70%);
     }
-    
-    @keyframes battleArenaGlow {
-      0%, 100% { 
-        box-shadow: 
-          0 0 40px rgba(218, 165, 32, 0.3),
-          inset 0 0 80px rgba(139, 69, 19, 0.3),
-          inset 0 0 20px rgba(218, 165, 32, 0.2);
-      }
-      50% { 
-        box-shadow: 
-          0 0 60px rgba(218, 165, 32, 0.5),
-          inset 0 0 100px rgba(139, 69, 19, 0.4),
-          inset 0 0 40px rgba(218, 165, 32, 0.3);
-      }
+    .hero-arena-glow {
+      position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(218,165,32,0.12) 0%, transparent 70%);
+      animation: heroGlow 4s ease-in-out infinite;
     }
-    
-    .battle-gladiator {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      animation: battleFloat 3s ease-in-out infinite;
+    @keyframes heroGlow {
+      0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
     }
-    
-    @keyframes battleFloat {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-15px); }
+    .hero-title {
+      font-family: 'Cinzel', serif; font-weight: 900;
+      background: linear-gradient(135deg, #ffd700, #daa520, #b8860b, #daa520, #ffd700);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+      filter: drop-shadow(0 4px 30px rgba(218,165,32,0.3));
     }
-    
-    .battle-gladiator.left {
-      left: 20%;
-      top: 55%;
-      animation-delay: 0s;
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
     }
-    
-    .battle-gladiator.center {
-      left: 50%;
-      top: 22%;
-      transform: translateX(-50%);
-      animation-delay: 0.5s;
+    .hero-cta {
+      background: linear-gradient(135deg, #daa520, #b8860b);
+      box-shadow: 0 4px 30px rgba(218,165,32,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
     }
-    
-    .battle-gladiator.right {
-      right: 20%;
-      top: 55%;
-      animation-delay: 1s;
+    .hero-cta::before {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      animation: ctaSweep 3s ease-in-out infinite;
     }
-    
-    .battle-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      animation: battleGlow 2s ease-in-out infinite;
+    @keyframes ctaSweep {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
     }
-    
-    @keyframes battleGlow {
-      0%, 100% {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5),
-                    0 0 20px rgba(255, 255, 255, 0.2);
-      }
-      50% {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5),
-                    0 0 40px rgba(255, 255, 255, 0.4);
-      }
+    .hero-cta:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 50px rgba(218,165,32,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
     }
-    
-    .battle-gladiator.left .battle-avatar {
-      background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      animation: scrollBounce 2s ease-in-out infinite;
     }
-    
-    .battle-gladiator.center .battle-avatar {
-      background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%);
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+      50% { transform: translateX(-50%) translateY(10px); opacity: 1; }
     }
-    
-    .battle-gladiator.right .battle-avatar {
-      background: linear-gradient(135deg, #cc785c 0%, #a0614a 100%);
+
+    /* ===== MINI ARENA (HERO) ===== */
+    .mini-arena-container {
+      position: relative; width: 420px; height: 320px;
     }
-    
-    .battle-text {
-      position: absolute;
-      top: 48%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 50px;
-      font-weight: 900;
-      color: #daa520;
-      text-shadow: 0 0 20px rgba(218, 165, 32, 0.8),
-                   0 4px 8px rgba(0, 0, 0, 0.8);
-      animation: battlePulse 1.5s ease-in-out infinite;
-      z-index: 5;
-      font-family: 'Georgia', serif;
-      letter-spacing: 6px;
+    .mini-arena-ring {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 300px; height: 300px; border-radius: 50%;
+      border: 3px solid rgba(139,69,19,0.3);
+      background: radial-gradient(circle, rgba(101,67,33,0.05) 0%, rgba(139,69,19,0.1) 50%, transparent 100%);
+      box-shadow: 0 0 60px rgba(218,165,32,0.15), inset 0 0 80px rgba(139,69,19,0.1);
+      animation: arenaRingPulse 4s ease-in-out infinite;
     }
-    
-    @keyframes battlePulse {
-      0%, 100% { 
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.8;
-      }
-      50% { 
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 1;
-      }
+    @keyframes arenaRingPulse {
+      0%, 100% { box-shadow: 0 0 60px rgba(218,165,32,0.15), inset 0 0 80px rgba(139,69,19,0.1); }
+      50% { box-shadow: 0 0 100px rgba(218,165,32,0.3), inset 0 0 120px rgba(139,69,19,0.2); }
     }
-    
-    .battle-name {
-      margin-top: 8px;
-      color: white;
-      font-weight: bold;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    
-    .battle-message {
-      position: absolute;
-      top: 15%;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #daa520;
-      font-size: 18px;
-      font-weight: bold;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-      font-family: 'Georgia', serif;
-    }
-    
-    /* Mini Arena - Home Page Preview */
-    .mini-arena {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      margin: 0 auto 30px;
-    }
-    
-    .mini-arena-circle {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      border: 3px solid rgba(139, 69, 19, 0.4);
-      background: radial-gradient(circle at center,
-        rgba(101, 67, 33, 0.05) 0%,
-        rgba(139, 69, 19, 0.1) 50%,
-        transparent 100%
-      );
-      box-shadow: 
-        0 0 30px rgba(218, 165, 32, 0.2),
-        inset 0 0 50px rgba(139, 69, 19, 0.2);
-      animation: miniArenaGlow 3s ease-in-out infinite;
-    }
-    
-    @keyframes miniArenaGlow {
-      0%, 100% { 
-        box-shadow: 
-          0 0 30px rgba(218, 165, 32, 0.2),
-          inset 0 0 50px rgba(139, 69, 19, 0.2);
-      }
-      50% { 
-        box-shadow: 
-          0 0 40px rgba(218, 165, 32, 0.3),
-          inset 0 0 60px rgba(139, 69, 19, 0.3);
-      }
-    }
-    
     .mini-gladiator {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      animation: miniFloat 3s ease-in-out infinite;
+      position: absolute; display: flex; flex-direction: column;
+      align-items: center; z-index: 5;
     }
-    
-    /* Position 5 LLMs in a circle */
-    .mini-gladiator.mini-pos-1 {
-      left: 50%;
-      top: 10px;
-      transform: translateX(-50%);
-      animation-delay: 0s;
-    }
-    
-    .mini-gladiator.mini-pos-2 {
-      right: 20px;
-      top: 65px;
-      animation-delay: 0.2s;
-    }
-    
-    .mini-gladiator.mini-pos-3 {
-      right: 35px;
-      bottom: 45px;
-      animation-delay: 0.4s;
-    }
-    
-    .mini-gladiator.mini-pos-4 {
-      left: 35px;
-      bottom: 45px;
-      animation-delay: 0.6s;
-    }
-    
-    .mini-gladiator.mini-pos-5 {
-      left: 20px;
-      top: 65px;
-      animation-delay: 0.8s;
-    }
-    
+    .mini-gladiator.mg-1 { left: 50%; top: 15px; transform: translateX(-50%); }
+    .mini-gladiator.mg-2 { right: 25px; top: 80px; }
+    .mini-gladiator.mg-3 { right: 40px; bottom: 50px; }
+    .mini-gladiator.mg-4 { left: 40px; bottom: 50px; }
+    .mini-gladiator.mg-5 { left: 25px; top: 80px; }
     .mini-avatar {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-      animation: miniGlow 2s ease-in-out infinite;
-      margin-bottom: 4px;
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transition: all 0.3s ease;
     }
-    
-    .mini-avatar.mini-gpt {
-      background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+    .mini-avatar:hover { transform: scale(1.15); }
+    .mini-avatar.ma-gpt { background: linear-gradient(135deg, #10a37f, #0d8c6d); }
+    .mini-avatar.ma-gemini { background: linear-gradient(135deg, #4285f4, #34a853 50%, #fbbc04 75%, #ea4335); }
+    .mini-avatar.ma-claude { background: linear-gradient(135deg, #cc785c, #a0614a); }
+    .mini-avatar.ma-mistral { background: linear-gradient(135deg, #ff7000, #d15a00); }
+    .mini-avatar.ma-llama { background: linear-gradient(135deg, #5436da, #3d24a8); }
+    .mini-hp-bar {
+      width: 44px; height: 4px; background: rgba(0,0,0,0.4);
+      border-radius: 2px; overflow: hidden; margin-bottom: 3px;
     }
-    
-    .mini-avatar.mini-gemini {
-      background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%);
+    .mini-hp-fill {
+      height: 100%; width: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      transition: width 0.3s ease-out, background 0.3s;
     }
-    
-    .mini-avatar.mini-claude {
-      background: linear-gradient(135deg, #cc785c 0%, #a0614a 100%);
-    }
-    
-    .mini-avatar.mini-mistral {
-      background: linear-gradient(135deg, #ff7000 0%, #d15a00 100%);
-    }
-    
-    .mini-avatar.mini-llama {
-      background: linear-gradient(135deg, #5436da 0%, #3d24a8 100%);
-    }
-    
-    .mini-health-bar {
-      width: 40px;
-      height: 4px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 2px;
-    }
-    
-    .mini-health-fill {
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
-      transition: width 0.3s ease-out;
-    }
-    
     .mini-name {
-      font-size: 9px;
-      font-weight: bold;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: rgba(218,165,32,0.6);
+    }
+    /* Float animations for each gladiator */
+    .mg-1 { animation: mgFloat1 3.5s ease-in-out infinite; }
+    .mg-2 { animation: mgFloat2 3.2s ease-in-out infinite 0.3s; }
+    .mg-3 { animation: mgFloat3 3.8s ease-in-out infinite 0.6s; }
+    .mg-4 { animation: mgFloat4 3.3s ease-in-out infinite 0.9s; }
+    .mg-5 { animation: mgFloat5 3.6s ease-in-out infinite 1.2s; }
+    @keyframes mgFloat1 { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+    @keyframes mgFloat2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes mgFloat3 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    @keyframes mgFloat4 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    @keyframes mgFloat5 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* ===== BEAM / EXPLOSION EFFECTS (shared) ===== */
+    .beam-line {
+      position: fixed; height: 6px; border-radius: 3px; pointer-events: none; z-index: 10000;
+      background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,215,0,1) 40%, rgba(255,140,0,0.8) 80%, rgba(255,69,0,0) 100%);
+      box-shadow: 0 0 15px rgba(255,215,0,1), 0 0 30px rgba(255,165,0,0.6), 0 0 5px rgba(255,255,255,0.8);
+    }
+    .explosion-circle {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 10001;
+      background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,215,0,0.9) 20%, rgba(255,140,0,0.7) 40%, rgba(255,69,0,0.4) 60%, rgba(255,0,0,0) 80%);
+      box-shadow: 0 0 30px rgba(255,165,0,0.8), 0 0 60px rgba(255,140,0,0.5);
+    }
+
+    /* ===== BATTLE OVERLAY (loading screen) ===== */
+    .battle-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: radial-gradient(ellipse at center, rgba(42,24,16,0.7) 0%, rgba(8,6,4,0.98) 70%);
+      display: none; opacity: 0; transition: opacity 0.6s ease-in-out;
+    }
+    .battle-overlay.active { display: flex; opacity: 1; align-items: center; justify-content: center; flex-direction: column; }
+    .battle-ring {
+      width: 500px; height: 500px; border-radius: 50%; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      border: 4px solid rgba(139,69,19,0.4);
+      background: radial-gradient(circle, rgba(101,67,33,0.08) 0%, rgba(139,69,19,0.12) 50%, transparent 100%);
+      box-shadow: 0 0 80px rgba(218,165,32,0.2), inset 0 0 120px rgba(139,69,19,0.15);
+      animation: battleRingPulse 3s ease-in-out infinite;
+    }
+    @keyframes battleRingPulse {
+      0%, 100% { box-shadow: 0 0 80px rgba(218,165,32,0.2), inset 0 0 120px rgba(139,69,19,0.15); }
+      50% { box-shadow: 0 0 120px rgba(218,165,32,0.4), inset 0 0 160px rgba(139,69,19,0.25); }
+    }
+    .battle-gladiator {
+      position: absolute; width: 110px; display: flex; flex-direction: column;
+      align-items: center; z-index: 5;
+    }
+    .battle-avatar {
+      width: 100px; height: 100px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 46px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      animation: battleAvatarGlow 2s ease-in-out infinite;
+    }
+    @keyframes battleAvatarGlow {
+      0%, 100% { box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.15); }
+      50% { box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 50px rgba(255,255,255,0.35); }
+    }
+    .battle-gladiator.bg-left { left: 18%; top: 52%; animation: bFloat 3.2s ease-in-out infinite; }
+    .battle-gladiator.bg-center { left: 50%; top: 20%; transform: translateX(-50%); animation: bFloatC 3.5s ease-in-out infinite 0.5s; }
+    .battle-gladiator.bg-right { right: 18%; top: 52%; animation: bFloat 3s ease-in-out infinite 1s; }
+    @keyframes bFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+    @keyframes bFloatC { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-18px); } }
+    .bg-left .battle-avatar { background: linear-gradient(135deg, #10a37f, #0d8c6d); }
+    .bg-center .battle-avatar { background: linear-gradient(135deg, #4285f4, #34a853 50%, #fbbc04 75%, #ea4335); }
+    .bg-right .battle-avatar { background: linear-gradient(135deg, #cc785c, #a0614a); }
+    .battle-name {
+      margin-top: 10px; color: rgba(255,255,255,0.9); font-weight: 700;
+      font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    }
+    .battle-hp-bar {
+      width: 80px; height: 5px; background: rgba(0,0,0,0.5);
+      border-radius: 3px; overflow: hidden; margin-top: 6px;
+    }
+    .battle-hp-fill {
+      height: 100%; width: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      transition: width 0.3s ease-out, background 0.3s;
+    }
+    .battle-title {
+      position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+      font-family: 'Cinzel', serif; font-size: 56px; font-weight: 900;
+      color: #daa520; letter-spacing: 8px; z-index: 10;
+      text-shadow: 0 0 40px rgba(218,165,32,0.6), 0 4px 12px rgba(0,0,0,0.8);
+      animation: battleTitlePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes battleTitlePulse {
+      0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.85; }
+      50% { transform: translateX(-50%) scale(1.04); opacity: 1; }
+    }
+    .battle-msg {
+      position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%);
+      color: rgba(218,165,32,0.8); font-family: 'Cinzel', serif;
+      font-size: 16px; font-weight: 600; letter-spacing: 3px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 10;
+      white-space: nowrap;
+    }
+    .battle-progress-bar {
+      position: absolute; bottom: 7%; left: 50%; transform: translateX(-50%);
+      width: 300px; height: 4px; background: rgba(139,69,19,0.3);
+      border-radius: 2px; overflow: hidden; z-index: 10;
+    }
+    .battle-progress-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, #daa520, #ffd700);
+      animation: progressPulse 2s ease-in-out infinite;
+      transition: width 0.5s ease;
+    }
+    @keyframes progressPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* ===== SETTINGS DRAWER ===== */
+    .settings-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 90vw;
+      z-index: 9998; transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      background: linear-gradient(180deg, #1a1410 0%, #0d0b08 100%);
+      border-left: 1px solid rgba(139,69,19,0.3);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+      overflow-y: auto;
+    }
+    .settings-drawer.open { transform: translateX(0); }
+    .settings-backdrop {
+      position: fixed; inset: 0; z-index: 9997;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .settings-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    /* ===== PODIUM ANIMATION ===== */
+    .podium-container { perspective: 800px; }
+    .podium-bar {
+      transition: height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+    }
+    .podium-entry {
+      animation: podiumSlideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes podiumSlideUp {
+      from { transform: translateY(80px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .champion-crown {
+      animation: crownBounce 1s ease-in-out infinite, crownGlow 2s ease-in-out infinite;
+    }
+    @keyframes crownBounce {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+    @keyframes crownGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(255,215,0,0.5)); }
+      50% { filter: drop-shadow(0 0 20px rgba(255,215,0,0.9)); }
+    }
+
+    /* ===== CONFETTI ===== */
+    .confetti-piece {
+      position: fixed; pointer-events: none; z-index: 10002;
+      animation: confettiFall var(--dur) var(--delay) ease-in forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translateY(100vh) rotate(var(--rot)) scale(0.5); opacity: 0; }
+    }
+
+    /* ===== FORM STYLES ===== */
+    .form-section {
+      background: linear-gradient(180deg, rgba(20,15,10,0.95), rgba(12,9,6,0.98));
+      border: 1px solid rgba(139,69,19,0.15);
+    }
+    .input-dark {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(184,134,11,0.2);
+      color: #e8dcc8; transition: all 0.3s ease;
+    }
+    .input-dark::placeholder { color: rgba(184,134,11,0.3); }
+    .input-dark:focus {
+      outline: none; border-color: rgba(218,165,32,0.5);
+      box-shadow: 0 0 0 3px rgba(218,165,32,0.1), 0 0 20px rgba(218,165,32,0.1);
+    }
+    .model-card {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+    .model-card:hover { transform: translateY(-2px) scale(1.02); }
+    .model-card.selected {
+      transform: translateY(-2px); 
+      box-shadow: 0 4px 20px var(--glow-color);
+    }
+    .preset-btn {
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+    }
+    .preset-btn.active::after {
+      content: ''; position: absolute; bottom: 0; left: 10%; right: 10%; height: 2px;
+      background: #daa520; border-radius: 1px;
+    }
+    /* Submit button glow */
+    .submit-btn {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, #daa520, #b8860b);
+      box-shadow: 0 4px 30px rgba(218,165,32,0.3);
+      transition: all 0.3s ease;
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: scale(1.03);
+      box-shadow: 0 8px 50px rgba(218,165,32,0.5);
+    }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .submit-btn::before {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+      animation: ctaSweep 4s ease-in-out infinite;
     }
     
-    @keyframes miniFloat {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-3px) scale(1.03); }
-    }
-    
-    .mini-gladiator.mini-pos-1 {
-      animation: miniFloatCenter 3s ease-in-out infinite;
-    }
-    
-    @keyframes miniFloatCenter {
-      0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
-      50% { transform: translateX(-50%) translateY(-3px) scale(1.03); }
-    }
-    
-    @keyframes miniGlow {
-      0%, 100% {
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3),
-                    0 0 8px rgba(255, 255, 255, 0.1);
-      }
-      50% {
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3),
-                    0 0 15px rgba(255, 255, 255, 0.25);
-      }
-    }
-    
-    /* Tooltip styles */
-    .tooltip-container {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
+    /* ===== TOOLTIP ===== */
+    .tooltip-container { position: relative; display: inline-flex; align-items: center; }
     .tooltip-trigger {
-      cursor: help;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #e5e7eb;
-      color: #6b7280;
-      font-size: 11px;
-      font-weight: bold;
-      margin-left: 6px;
-      transition: all 0.2s;
+      cursor: help; display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: rgba(218,165,32,0.2); color: #daa520;
+      font-size: 10px; font-weight: bold; margin-left: 6px; transition: all 0.2s;
     }
-    .tooltip-trigger:hover {
-      background: #3b82f6;
-      color: white;
-    }
+    .tooltip-trigger:hover { background: #daa520; color: #1a0f06; }
     .tooltip-content {
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
+      position: absolute; bottom: 100%; left: 50%;
       transform: translateX(-50%) translateY(-8px);
-      background: #1f2937;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      line-height: 1.4;
-      width: 200px;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: #1a1410; color: #e8dcc8; border: 1px solid rgba(139,69,19,0.3);
+      padding: 8px 12px; border-radius: 8px; font-size: 11px; line-height: 1.4;
+      width: 220px; z-index: 1000; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
     }
     .tooltip-content::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: #1f2937;
+      content: ''; position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%); border: 6px solid transparent;
+      border-top-color: #1a1410;
     }
-    .tooltip-container:hover .tooltip-content {
-      opacity: 1;
+    .tooltip-container:hover .tooltip-content { opacity: 1; }
+
+    /* ===== REPORT WRAPPER — POLISHED UI ===== */
+    .report-wrapper {
+      background: #ffffff; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 12px 48px rgba(0,0,0,0.12);
+      margin: 40px auto; max-width: 1400px; position: relative;
+      border: 1px solid rgba(0,0,0,0.06);
     }
+    .report-wrapper, .report-wrapper * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }
+    .report-wrapper .header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+      color: white; padding: 48px 44px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .report-wrapper .header::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 25% 15%, rgba(129,140,248,0.2) 0%, transparent 50%),
+                  radial-gradient(ellipse at 75% 85%, rgba(167,139,250,0.15) 0%, transparent 50%);
+    }
+    .report-wrapper .header::after {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .report-wrapper .header h1 {
+      font-size: 36px; font-weight: 800; margin: 0 0 10px 0;
+      letter-spacing: -0.5px; color: white !important; position: relative; z-index: 1;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    }
+    .report-wrapper .header .subtitle {
+      font-size: 15px; opacity: 0.7; font-weight: 400; color: white !important;
+      position: relative; z-index: 1; letter-spacing: 0.3px;
+    }
+    .report-wrapper .content { padding: 40px 44px; }
+    .report-wrapper .prompt-box {
+      background: #fafaf9; border-left: 4px solid #a78bfa;
+      padding: 20px 24px; margin: 0 0 32px 0; border-radius: 12px;
+      font-size: 15px; color: #44403c !important;
+      line-height: 1.7; border: 1px solid #f5f5f4;
+    }
+    .report-wrapper .prompt-box strong { font-weight: 700; font-size: 15px; color: #1c1917 !important; }
+    .report-wrapper .winner-section {
+      background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
+      border: 1px solid #e7e5e4; border-radius: 16px; padding: 32px;
+      margin: 32px 0; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      position: relative; overflow: hidden;
+    }
+    .report-wrapper .winner-section::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed, #a78bfa);
+    }
+    .report-wrapper .winner-section h2 {
+      font-size: 14px; margin: 0 0 16px 0; color: #78716c !important;
+      justify-content: center; position: relative; text-transform: uppercase;
+      letter-spacing: 1.5px; font-weight: 600;
+    }
+    .report-wrapper .winner-name {
+      font-size: 32px; font-weight: 800; color: #1c1917 !important;
+      margin: 8px 0; position: relative; letter-spacing: -0.5px;
+    }
+    .report-wrapper .winner-score {
+      font-size: 16px; color: #78716c !important; font-weight: 500; position: relative;
+      margin-top: 4px;
+    }
+    .report-wrapper .badge {
+      display: inline-block; padding: 6px 18px; border-radius: 999px;
+      font-weight: 600; font-size: 13px; color: white !important; margin-top: 16px;
+      position: relative; letter-spacing: 0.2px;
+    }
+    .report-wrapper h2 {
+      font-size: 20px; font-weight: 700; margin: 40px 0 16px 0;
+      color: #1c1917 !important; display: flex; align-items: center; gap: 10px;
+      letter-spacing: -0.3px;
+    }
+    .report-wrapper table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: white; margin: 16px 0; border-radius: 12px;
+      overflow: hidden; border: 1px solid #e7e5e4;
+    }
+    .report-wrapper th, .report-wrapper td {
+      padding: 12px 14px; text-align: center; font-size: 13.5px;
+      border-bottom: 1px solid #f5f5f4;
+    }
+    .report-wrapper th {
+      background: #1e1b4b; color: white !important; font-weight: 600;
+      text-transform: uppercase; font-size: 10.5px; letter-spacing: 1px; padding: 13px 14px;
+    }
+    .report-wrapper tr:last-child td { border-bottom: none; }
+    .report-wrapper tbody tr { transition: background-color 0.15s ease; }
+    .report-wrapper tbody tr:hover { background: #fafaf9; }
+    .report-wrapper .judge {
+      font-weight: 600; background: #fafaf9; text-align: left; color: #44403c !important;
+      font-size: 13px;
+    }
+    .report-wrapper .judge.supreme {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e !important; font-weight: 700;
+    }
+    .report-wrapper .diagonal-header {
+      position: relative; height: 68px; background: #1e1b4b; padding: 0;
+    }
+    .report-wrapper .diagonal-header .top-right {
+      position: absolute; top: 10px; right: 14px; font-size: 11px;
+      font-weight: 600; color: rgba(255,255,255,0.7) !important;
+    }
+    .report-wrapper .diagonal-header .bottom-left {
+      position: absolute; bottom: 10px; left: 14px; font-size: 11px;
+      font-weight: 600; color: rgba(255,255,255,0.7) !important;
+    }
+    .report-wrapper .diagonal-header svg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    }
+    .report-wrapper .model { font-weight: 700; color: #4338ca !important; font-size: 14px; text-align: left; }
+    .report-wrapper .metric-cell {
+      font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+      font-weight: 600; font-size: 13px;
+    }
+    .report-wrapper .no-gradient {
+      font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+      color: #78716c !important; font-weight: 500; font-size: 12.5px;
+    }
+    .report-wrapper .length {
+      font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+      color: #78716c !important; font-size: 12.5px;
+    }
+    .report-wrapper .response-wrap {
+      text-align: left; font-size: 13px; line-height: 1.7; color: #44403c !important;
+      background: #fafaf9; padding: 10px 14px; border-radius: 8px; border: 1px solid #f5f5f4;
+      min-width: 280px; max-width: 420px;
+    }
+    .report-wrapper .response-wrap.scrollable {
+      max-height: 180px; overflow-y: auto;
+    }
+    .report-wrapper .response-wrap::-webkit-scrollbar { width: 4px; }
+    .report-wrapper .response-wrap::-webkit-scrollbar-track { background: transparent; }
+    .report-wrapper .response-wrap::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+    .report-wrapper .response-wrap::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    .report-wrapper .response-fade {
+      position: relative;
+    }
+    .report-wrapper .response-fade::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 32px;
+      background: linear-gradient(transparent, #fafaf9); pointer-events: none;
+      border-radius: 0 0 8px 8px;
+    }
+    .report-wrapper .response {
+      text-align: left; max-height: 160px; overflow-y: auto; font-size: 13px;
+      line-height: 1.7; color: #44403c !important; background: #fafaf9;
+      padding: 10px 14px; border-radius: 8px; border: 1px solid #f5f5f4;
+    }
+    .report-wrapper .response::-webkit-scrollbar { width: 4px; }
+    .report-wrapper .response::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+    .report-wrapper .conclusions {
+      background: #fafaf9; border-radius: 12px; padding: 24px 28px; margin: 36px 0;
+      border: 1px solid #e7e5e4;
+    }
+    .report-wrapper .conclusions h2 { margin-top: 0; font-size: 18px; }
+    .report-wrapper .conclusions ul { list-style: none; padding: 0; margin: 14px 0 0 0; }
+    .report-wrapper .conclusions li {
+      padding: 8px 0; font-size: 14px; color: #44403c !important;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .report-wrapper .conclusions li:before {
+      content: "✓"; display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; font-size: 11px;
+      background: #4338ca; color: white !important; border-radius: 50%;
+      font-weight: 700; flex-shrink: 0;
+    }
+    .report-wrapper .conclusions b { color: #1c1917 !important; font-weight: 700; }
+    .report-wrapper td { color: #1f2937 !important; }
+    .report-wrapper p { color: #57534e !important; line-height: 1.7; }
+    .report-wrapper small { color: #78716c !important; font-size: 11px; }
+    .report-wrapper .rank-medal { font-size: 18px; margin-right: 2px; }
+    @media (max-width: 768px) {
+      .report-wrapper .content { padding: 20px; }
+      .report-wrapper .header { padding: 30px 20px; }
+      .report-wrapper .header h1 { font-size: 26px; }
+      .report-wrapper .winner-name { font-size: 22px; }
+      .report-wrapper table { font-size: 12px; }
+      .report-wrapper th, .report-wrapper td { padding: 8px 6px; }
+    }
+    @media print {
+      .report-wrapper { box-shadow: none; }
+    }
+
+    /* ===== STAGGER ANIMATIONS ===== */
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .fade-in-up {
+      opacity: 0; transform: translateY(20px);
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d0b09; }
+    ::-webkit-scrollbar-thumb { background: rgba(139,69,19,0.4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139,69,19,0.6); }
   </style>
 </head>
-<body class="bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 min-h-screen">
-  <div id="root"></div>
-  
-  <!-- Battle Animation Overlay -->
+<body>
+  <!-- Colosseum Gate -->
+  <div id="gateOverlay" class="gate-overlay">
+    <div class="gate-left"><div class="gate-emblem">🏛️</div><div class="gate-text">LLM Arena</div></div>
+    <div class="gate-right"><div class="gate-emblem">⚔️</div><div class="gate-text">Enter</div></div>
+  </div>
+
+  <!-- Torch flicker edges -->
+  <div class="torch-left"></div>
+  <div class="torch-right"></div>
+
+  <!-- Sand particles -->
+  <canvas id="sandCanvas" class="sand-canvas"></canvas>
+
+  <!-- Battle Overlay -->
   <div id="battleOverlay" class="battle-overlay">
-    <div class="battle-arena">
-      <div class="battle-text">FIGHTING</div>
-      <div class="battle-message" id="battleMsg">⚔️ Models entering the arena...</div>
-      
-      <div class="battle-gladiator left">
+    <div style="width:100%;height:100%;position:relative;overflow:hidden;">
+      <div class="battle-ring"></div>
+      <div class="battle-title">FIGHTING</div>
+      <div id="battleRunCounter" style="display:none;font-family:Cinzel,serif;font-size:14px;color:rgba(218,165,32,0.8);letter-spacing:0.15em;margin-bottom:4px;text-transform:uppercase;"></div>
+      <div class="battle-msg" id="battleMsg">⚔️ Models entering the arena...</div>
+      <div class="battle-progress-bar"><div class="battle-progress-fill" id="battleProgress" style="width:10%"></div></div>
+      <div class="battle-gladiator bg-left">
         <div class="battle-avatar">🛡️</div>
         <div class="battle-name">GPT</div>
+        <div class="battle-hp-bar"><div class="battle-hp-fill" id="battleHp1"></div></div>
       </div>
-      
-      <div class="battle-gladiator center">
+      <div class="battle-gladiator bg-center">
         <div class="battle-avatar">⚔️</div>
         <div class="battle-name">Gemini</div>
+        <div class="battle-hp-bar"><div class="battle-hp-fill" id="battleHp2"></div></div>
       </div>
-      
-      <div class="battle-gladiator right">
+      <div class="battle-gladiator bg-right">
         <div class="battle-avatar">🗡️</div>
         <div class="battle-name">Claude</div>
+        <div class="battle-hp-bar"><div class="battle-hp-fill" id="battleHp3"></div></div>
       </div>
     </div>
   </div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+  <!-- Settings Drawer Backdrop -->
+  <div id="settingsBackdrop" class="settings-backdrop" onclick="window.dispatchEvent(new CustomEvent('close-settings'));"></div>
 
-    // Tooltip component
-    const Tooltip = ({ text, children }) => {
-      return (
-        <span className="tooltip-container">
-          {children}
-          <span className="tooltip-trigger">?</span>
-          <span className="tooltip-content">{text}</span>
-        </span>
-      );
-    };
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Tooltip
+    const Tooltip = ({ text, children }) => (
+      <span className="tooltip-container">
+        {children}
+        <span className="tooltip-trigger">?</span>
+        <span className="tooltip-content">{text}</span>
+      </span>
+    );
 
     const WEBHOOK_URL = 'https://n8n.srv1262078.hstgr.cloud/webhook/ai-judges-report';
     const PRESETS_URL = 'https://n8n.srv1262078.hstgr.cloud/webhook/model-presets';
 
-    // Fallback presets if API fails (updated 2026-02-07)
     const FALLBACK_PRESETS = {
       lastUpdated: "2026-02-07",
-      flagship: [
-        'openai/gpt-5.2',
-        'openai/gpt-5.2-pro',
-        'openai/gpt-4o',
-        'anthropic/claude-opus-4.5',
-        'anthropic/claude-3.5-sonnet',
-        'google/gemini-3-pro-preview',
-        'google/gemini-2.5-pro',
-        'mistralai/mistral-large-2512'
-      ],
-      fast: [
-        'openai/gpt-5.2-chat',
-        'openai/gpt-4o-mini',
-        'anthropic/claude-3.5-haiku',
-        'google/gemini-3-flash-preview',
-        'google/gemini-2.5-flash',
-        'meta-llama/llama-3.3-70b-instruct',
-        'mistralai/ministral-14b-2512'
-      ],
-      budget: [
-        'google/gemini-flash-1.5',
-        'meta-llama/llama-3.1-8b-instruct',
-        'mistralai/ministral-3b-2512',
-        'liquid/lfm-2.2-6b'
-      ],
-      context: [
-        'writer/palmyra-x5',
-        'google/gemini-3-pro-preview',
-        'openai/gpt-5.2',
-        'anthropic/claude-opus-4.5',
-        'x-ai/grok-4.1-fast'
-      ]
+      flagship: ['openai/gpt-5.2','openai/gpt-5.2-pro','openai/gpt-4o','anthropic/claude-opus-4.5','anthropic/claude-3.5-sonnet','google/gemini-3-pro-preview','google/gemini-2.5-pro','mistralai/mistral-large-2512'],
+      fast: ['openai/gpt-5.2-chat','openai/gpt-4o-mini','anthropic/claude-3.5-haiku','google/gemini-3-flash-preview','google/gemini-2.5-flash','meta-llama/llama-3.3-70b-instruct','mistralai/ministral-14b-2512'],
+      budget: ['google/gemini-flash-1.5','meta-llama/llama-3.1-8b-instruct','mistralai/ministral-3b-2512','liquid/lfm-2.2-6b'],
+      context: ['writer/palmyra-x5','google/gemini-3-pro-preview','openai/gpt-5.2','anthropic/claude-opus-4.5','x-ai/grok-4.1-fast']
     };
 
-    // Fallback models if API fails
     const FALLBACK_MODELS = [
       { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
       { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
@@ -520,861 +726,1467 @@
       { id: 'google/gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', provider: 'Google' },
     ];
 
+    // Provider brand colors
+    const PROVIDER_COLORS = {
+      'OpenAI': { bg: '#10a37f', glow: 'rgba(16,163,127,0.3)' },
+      'Openai': { bg: '#10a37f', glow: 'rgba(16,163,127,0.3)' },
+      'Anthropic': { bg: '#cc785c', glow: 'rgba(204,120,92,0.3)' },
+      'Google': { bg: '#4285f4', glow: 'rgba(66,133,244,0.3)' },
+      'Meta-llama': { bg: '#5436da', glow: 'rgba(84,54,218,0.3)' },
+      'Mistralai': { bg: '#ff7000', glow: 'rgba(255,112,0,0.3)' },
+      'Cohere': { bg: '#39594d', glow: 'rgba(57,89,77,0.3)' },
+    };
+    const getProviderColor = (provider) => PROVIDER_COLORS[provider] || { bg: '#666', glow: 'rgba(102,102,102,0.3)' };
+
+    // Generate HTML report from JSON data (ported from v17_4)
+    function generateHTMLFromJSON(data) {
+      const getRankColor = (r, min, max) => {
+        if (!r) return '';
+        const n = (r - min) / (max - min);
+        if (n < 0.5) {
+          const hue = 140 - n * 80;
+          return `hsl(${hue}, 60%, 85%)`;
+        } else {
+          const hue = 60 - (n - 0.5) * 60;
+          return `hsl(${hue}, 65%, 85%)`;
+        }
+      };
+      // inv=false: higher value = green (good for score). inv=true: higher value = red (bad for cost/time)
+      const getGradient = (v, min, max, inv = false) => {
+        if (v == null || min === max) return '';
+        const n = (v - min) / (max - min);
+        const effectiveN = inv ? n : (1 - n);
+        const hue = 140 - effectiveN * 140;
+        return `hsl(${hue}, 60%, 85%)`;
+      };
+
+      const allRanks = [];
+      data.judge_matrix.forEach(j => Object.values(j.rankings).forEach(r => allRanks.push(r)));
+      const minR = Math.min(...allRanks), maxR = Math.max(...allRanks);
+
+      const allCosts = data.final_ranking.map(r => r.cost).filter(c => c > 0);
+      const minC = allCosts.length ? Math.min(...allCosts) : 0, maxC = allCosts.length ? Math.max(...allCosts) : 1;
+
+      const allTimes = data.final_ranking.map(r => r.generation_time_ms).filter(t => t > 0);
+      const minT = allTimes.length ? Math.min(...allTimes) : 0, maxT = allTimes.length ? Math.max(...allTimes) : 1;
+
+      const allScores = data.final_ranking.map(r => r.unified_score);
+      const minS = Math.min(...allScores), maxS = Math.max(...allScores);
+
+      const matrixHeader = data.models_in_order.map(m => `<th>${m}</th>`).join('');
+
+      const regularJudges = data.judge_matrix.filter(j => j.type === 'regular');
+      const supremeJudges = data.judge_matrix.filter(j => j.type === 'supreme');
+
+      const regularRows = regularJudges.map(j => {
+        const cells = data.models_in_order.map(model => {
+          const rank = j.rankings[model];
+          if (!rank) return '<td>-</td>';
+          return `<td style="background-color: ${getRankColor(rank, minR, maxR)}; font-weight: bold;">${rank}</td>`;
+        }).join('');
+        return `<tr><td class="judge">${j.judge}</td>${cells}</tr>`;
+      }).join('');
+
+      let supremeRows = '';
+      if (data.config.enable_supreme_court && supremeJudges.length > 0) {
+        supremeRows = supremeJudges.map(j => {
+          const cells = data.models_in_order.map(model => {
+            const rank = j.rankings[model];
+            if (!rank) return '<td>-</td>';
+            return `<td style="background-color: ${getRankColor(rank, minR, maxR)}; font-weight: bold;">${rank}</td>`;
+          }).join('');
+          return `<tr><td class="judge supreme">${j.judge} ⚖️</td>${cells}</tr>`;
+        }).join('');
+      }
+
+      const matrixRows = regularRows + supremeRows;
+
+      const rankingRows = data.final_ranking.map(r => {
+        const cost = r.cost || 0;
+        const costPer1k = cost * 1000;
+        const timeMs = r.generation_time_ms || 0;
+        const timeSec = (timeMs / 1000).toFixed(1);
+        const length = r.response_length;
+        const scoreColor = getGradient(r.unified_score, minS, maxS, false);
+        const timeColor = getGradient(timeMs, minT, maxT, true);
+        const costColor = getGradient(cost, minC, maxC, true);
+        const costDisplay = cost ? `$${cost.toFixed(4)}` : 'N/A';
+        const costPer1kDisplay = costPer1k ? `$${costPer1k.toFixed(2)}` : '';
+        let scoreDetails = `${Math.round(r.unified_score)}`;
+        if (data.config.enable_supreme_court && r.supreme_borda > 0) {
+          scoreDetails += `<br><small>R:${r.regular_borda} + S:${r.supreme_borda}×2</small>`;
+        }
+        const medals = ['🥇','🥈','🥉'];
+        const medal = r.rank <= 3 ? `<span class="rank-medal">${medals[r.rank-1]}</span>` : '';
+        const respText = r.response_text || '';
+        const isLong = respText.length > 500;
+        const responseHtml = `<div class="response-wrap${isLong ? ' scrollable' : ''}">${respText}</div>`;
+        return `<tr>
+          <td style="font-weight:700;">${medal}${r.rank}</td>
+          <td class="model">${r.model}</td>
+          <td class="metric-cell" style="background-color: ${scoreColor};">${scoreDetails}</td>
+          <td class="metric-cell" style="background-color: ${timeColor};">${timeSec}s</td>
+          <td class="metric-cell" style="background-color: ${costColor};">${costDisplay}${costPer1kDisplay ? `<br><small style="color:#78716c;font-size:11px;">${costPer1kDisplay}/1K</small>` : ''}</td>
+          <td class="length">${length}</td>
+          <td>${responseHtml}</td>
+        </tr>`;
+      }).join('');
+
+      const unanimous = data.winner.consensus;
+      const totalCost = data.summary.total_cost;
+
+      const matrixTitle = data.config.enable_supreme_court
+        ? `📊 Ranking Matrix (${data.summary.total_judges} regular + ${data.summary.total_supreme_judges} supreme judges)`
+        : `📊 Ranking Matrix`;
+
+      const rankingTitle = data.config.enable_supreme_court
+        ? `🏆 Final Ranking (Weighted: Regular 1× + Supreme 2×)`
+        : `📈 Final Ranking (Borda Count)`;
+
+      return `<div class="header">
+      <h1>⚔️ LLM Arena — Evaluation Report</h1>
+      <div class="subtitle">${data.final_ranking.length} models · ${data.summary.total_judges} judges${data.config.enable_supreme_court ? ' + ' + data.summary.total_supreme_judges + ' supreme' : ''} · ${new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</div>
+    </div>
+    <div class="content">
+      <div class="prompt-box">
+        📝 <strong>Prompt</strong><br><br>
+        "${data.prompt}"
+      </div>
+      <div class="winner-section">
+        <h2>🏆 CHAMPION</h2>
+        <div class="winner-name">${data.winner.model}</div>
+        <div class="winner-score">Score: ${data.winner.score.toFixed(1)}</div>
+        <div class="badge" style="background:${unanimous ? '#4338ca' : '#7c3aed'};">${unanimous ? '✨ Unanimous Winner' : '🔥 Top Performer'}</div>
+      </div>
+      <h2>${matrixTitle}</h2>
+      <table>
+        <tr>
+          <th class="diagonal-header">
+            <svg><line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(255,255,255,0.3)" stroke-width="2"/></svg>
+            <span class="bottom-left">Judge</span>
+            <span class="top-right">Judged</span>
+          </th>
+          ${matrixHeader}
+        </tr>
+        ${matrixRows}
+      </table>
+      <h2>${rankingTitle}</h2>
+      <table>
+        <tr>
+          <th>Rank</th>
+          <th>Model</th>
+          <th>Score</th>
+          <th>Time</th>
+          <th>Cost</th>
+          <th>Length</th>
+          <th>Full Response</th>
+        </tr>
+        ${rankingRows}
+      </table>
+      <div class="conclusions">
+        <h2>🧠 Summary</h2>
+        <ul>
+          <li>Total judges: <b>${data.summary.total_judges}</b>${data.config.enable_supreme_court ? ` + ${data.summary.total_supreme_judges} supreme (2× weight)` : ''}</li>
+          <li>Total responses evaluated: <b>${data.summary.total_responses}</b></li>
+          <li>Total cost: <b>$${totalCost.toFixed(6)}</b></li>
+          <li>Aggregation method: <b>${data.summary.method}</b></li>
+        </ul>
+      </div>
+    </div>`;
+    }
+
+    // Extract ranking data from JSON for podium
+    function extractRankingFromJSON(data) {
+      if (!data || !data.final_ranking) return null;
+      return data.final_ranking.slice(0, 3).map((r, i) => ({
+        rank: r.rank || (i + 1),
+        name: r.model,
+        score: r.unified_score,
+        provider: ''
+      }));
+    }
+
+    // Generate aggregate report from multiple JSON responses
+    function generateAggregateReport(allResponses) {
+      const n = allResponses.length;
+      if (n < 2) return null;
+
+      // Helper functions
+      const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+      const stddev = arr => {
+        if (arr.length < 2) return 0;
+        const m = mean(arr);
+        return Math.sqrt(arr.reduce((sum, v) => sum + (v - m) ** 2, 0) / (arr.length - 1));
+      };
+      const cv = arr => { const m = mean(arr); return m !== 0 ? (stddev(arr) / Math.abs(m)) * 100 : 0; };
+
+      // Collect all models across all runs
+      const modelSet = new Set();
+      allResponses.forEach(d => {
+        if (d.final_ranking) d.final_ranking.forEach(r => modelSet.add(r.model));
+      });
+      const models = Array.from(modelSet);
+
+      // Per-model aggregation
+      const modelStats = {};
+      models.forEach(m => {
+        modelStats[m] = { scores: [], ranks: [], times: [], costs: [], lengths: [], wins: 0 };
+      });
+
+      allResponses.forEach(d => {
+        if (d.winner) modelStats[d.winner.model] && modelStats[d.winner.model].wins++;
+        if (d.final_ranking) {
+          d.final_ranking.forEach(r => {
+            const s = modelStats[r.model];
+            if (!s) return;
+            s.scores.push(r.unified_score);
+            s.ranks.push(r.rank);
+            s.times.push(r.generation_time_ms || 0);
+            s.costs.push(r.cost || 0);
+            s.lengths.push(r.response_length || 0);
+          });
+        }
+      });
+
+      // Sort by average score descending
+      const sorted = models
+        .filter(m => modelStats[m].scores.length > 0)
+        .sort((a, b) => mean(modelStats[b].scores) - mean(modelStats[a].scores));
+
+      // Color helpers (same as generateHTMLFromJSON)
+      const allAvgScores = sorted.map(m => mean(modelStats[m].scores));
+      const minS = Math.min(...allAvgScores), maxS = Math.max(...allAvgScores);
+      const allAvgTimes = sorted.map(m => mean(modelStats[m].times));
+      const minT = Math.min(...allAvgTimes), maxT = Math.max(...allAvgTimes);
+      const allAvgCosts = sorted.map(m => mean(modelStats[m].costs)).filter(c => c > 0);
+      const minC = allAvgCosts.length ? Math.min(...allAvgCosts) : 0;
+      const maxC = allAvgCosts.length ? Math.max(...allAvgCosts) : 1;
+
+      const getGrad = (v, min, max, inv) => {
+        if (v == null || min === max) return '';
+        const norm = (v - min) / (max - min);
+        const eff = inv ? norm : (1 - norm);
+        const hue = 140 - eff * 140;
+        return `hsl(${hue}, 60%, 85%)`;
+      };
+
+      // Winner across all runs
+      const overallWinner = sorted[0];
+      const winnerStats = modelStats[overallWinner];
+      const winRate = ((winnerStats.wins / n) * 100).toFixed(0);
+
+      // Consensus: did the same model win every time?
+      const allWinners = allResponses.map(d => d.winner?.model).filter(Boolean);
+      const uniqueWinners = [...new Set(allWinners)];
+      const isConsistent = uniqueWinners.length === 1;
+
+      // Build ranking table
+      const rankingRows = sorted.map((m, i) => {
+        const s = modelStats[m];
+        const avgScore = mean(s.scores);
+        const sdScore = stddev(s.scores);
+        const avgRank = mean(s.ranks);
+        const sdRank = stddev(s.ranks);
+        const avgTime = mean(s.times);
+        const sdTime = stddev(s.times);
+        const avgCost = mean(s.costs);
+        const avgLen = Math.round(mean(s.lengths));
+
+        const scoreColor = getGrad(avgScore, minS, maxS, false);
+        const timeColor = getGrad(avgTime, minT, maxT, true);
+        const costColor = getGrad(avgCost, minC, maxC, true);
+
+        const rankSpread = s.ranks.length > 1 ? `${Math.min(...s.ranks)}–${Math.max(...s.ranks)}` : `${s.ranks[0]}`;
+        const medals = ['🥇','🥈','🥉'];
+        const medal = i < 3 ? `<span class="rank-medal">${medals[i]}</span>` : '';
+
+        return `<tr>
+          <td style="font-weight:700;">${medal}${i + 1}</td>
+          <td class="model">${m}</td>
+          <td class="metric-cell" style="background-color:${scoreColor};">
+            ${Math.round(avgScore)}<br><small style="color:#78716c;">±${sdScore.toFixed(1)}</small>
+          </td>
+          <td class="metric-cell">${avgRank.toFixed(1)}<br><small style="color:#78716c;">${rankSpread}</small></td>
+          <td class="metric-cell" style="background-color:${timeColor};">${(avgTime/1000).toFixed(1)}s<br><small style="color:#78716c;">±${(sdTime/1000).toFixed(1)}s</small></td>
+          <td class="metric-cell" style="background-color:${costColor};">${avgCost ? '$'+avgCost.toFixed(4) : 'N/A'}</td>
+          <td class="length">${avgLen}</td>
+          <td style="text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#4338ca;">${s.wins}</div>
+            <small style="color:#78716c;">${((s.wins/n)*100).toFixed(0)}%</small>
+          </td>
+        </tr>`;
+      }).join('');
+
+      // Build rank distribution table (model × run)
+      const distHeader = allResponses.map((_, i) => `<th>R${i+1}</th>`).join('');
+      const distRows = sorted.map(m => {
+        const cells = allResponses.map(d => {
+          const entry = d.final_ranking?.find(r => r.model === m);
+          if (!entry) return '<td>-</td>';
+          const rank = entry.rank;
+          const maxRank = d.final_ranking.length;
+          const norm = maxRank > 1 ? (rank - 1) / (maxRank - 1) : 0;
+          const hue = 140 - norm * 140;
+          return `<td style="background:hsl(${hue},60%,85%);font-weight:700;">${rank}</td>`;
+        }).join('');
+        return `<tr><td class="judge">${m}</td>${cells}<td style="font-weight:700;">${mean(modelStats[m].ranks).toFixed(1)}</td></tr>`;
+      }).join('');
+
+      // Score distribution table
+      const scoreDistRows = sorted.map(m => {
+        const cells = allResponses.map(d => {
+          const entry = d.final_ranking?.find(r => r.model === m);
+          if (!entry) return '<td>-</td>';
+          const score = entry.unified_score;
+          const color = getGrad(score, minS, maxS, false);
+          return `<td style="background:${color};font-weight:600;">${Math.round(score)}</td>`;
+        }).join('');
+        const s = modelStats[m];
+        return `<tr><td class="judge">${m}</td>${cells}<td style="font-weight:700;">${Math.round(mean(s.scores))}</td><td>±${stddev(s.scores).toFixed(1)}</td></tr>`;
+      }).join('');
+
+      // Total cost across all runs
+      const totalCostAllRuns = allResponses.reduce((sum, d) => sum + (d.summary?.total_cost || 0), 0);
+
+      const prompt = allResponses[0]?.prompt || '';
+      const hasSupreme = allResponses[0]?.config?.enable_supreme_court;
+
+      return `<div class="header" style="background:linear-gradient(135deg,#0c0a09 0%,#1c1917 40%,#292524 100%);">
+      <h1>📊 Aggregate Report — ${n} Runs</h1>
+      <div class="subtitle">Statistical summary across ${n} independent evaluations · ${new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</div>
+    </div>
+    <div class="content">
+      <div class="prompt-box">
+        📝 <strong>Prompt</strong><br><br>
+        "${prompt}"
+      </div>
+
+      <div class="winner-section">
+        <h2>🏆 OVERALL CHAMPION</h2>
+        <div class="winner-name">${overallWinner}</div>
+        <div class="winner-score">
+          Avg Score: ${Math.round(mean(winnerStats.scores))} ± ${stddev(winnerStats.scores).toFixed(1)} · Won ${winnerStats.wins}/${n} runs (${winRate}%)
+        </div>
+        <div class="badge" style="background:${isConsistent ? '#4338ca' : uniqueWinners.length <= 2 ? '#c2410c' : '#b91c1c'};">
+          ${isConsistent ? '✨ Consistent Winner — Won all ' + n + ' runs' : '⚡ ' + uniqueWinners.length + ' different winners across ' + n + ' runs'}
+        </div>
+      </div>
+
+      <h2>📈 Aggregated Ranking</h2>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Model</th>
+          <th>Avg Score</th>
+          <th>Avg Rank</th>
+          <th>Avg Time</th>
+          <th>Avg Cost</th>
+          <th>Avg Len</th>
+          <th>Wins</th>
+        </tr>
+        ${rankingRows}
+      </table>
+
+      <h2>🎯 Rank Distribution (per run)</h2>
+      <table>
+        <tr>
+          <th class="diagonal-header" style="height:auto;padding:12px;">
+            <span class="bottom-left" style="position:static;">Model</span>
+          </th>
+          ${distHeader}
+          <th>Avg</th>
+        </tr>
+        ${distRows}
+      </table>
+
+      <h2>📊 Score Distribution (per run)</h2>
+      <table>
+        <tr>
+          <th style="text-align:left;padding-left:16px;">Model</th>
+          ${allResponses.map((_,i) => `<th>R${i+1}</th>`).join('')}
+          <th>Avg</th>
+          <th>σ</th>
+        </tr>
+        ${scoreDistRows}
+      </table>
+
+      <div class="conclusions">
+        <h2>🧠 Statistical Summary</h2>
+        <ul>
+          <li>Total runs: <b>${n}</b></li>
+          <li>Unique winners: <b>${uniqueWinners.join(', ')}</b> ${isConsistent ? '(unanimous)' : ''}</li>
+          <li>Most consistent model (lowest rank σ): <b>${sorted.reduce((best, m) => stddev(modelStats[m].ranks) < stddev(modelStats[best].ranks) ? m : best, sorted[0])}</b> (σ = ${stddev(modelStats[sorted.reduce((best, m) => stddev(modelStats[m].ranks) < stddev(modelStats[best].ranks) ? m : best, sorted[0])].ranks).toFixed(2)})</li>
+          <li>Most volatile model (highest rank σ): <b>${sorted.reduce((worst, m) => stddev(modelStats[m].ranks) > stddev(modelStats[worst].ranks) ? m : worst, sorted[0])}</b> (σ = ${stddev(modelStats[sorted.reduce((worst, m) => stddev(modelStats[m].ranks) > stddev(modelStats[worst].ranks) ? m : worst, sorted[0])].ranks).toFixed(2)})</li>
+          <li>Total cost (all runs): <b>$${totalCostAllRuns.toFixed(4)}</b></li>
+          ${hasSupreme ? `<li>Supreme Court: <b>enabled</b> (3 judges × 2× weight)</li>` : ''}
+        </ul>
+      </div>
+    </div>`;
+    }
+
+    // Extract ranking from aggregate data for podium display
+    function extractAggregateRanking(allResponses) {
+      const modelScores = {};
+      allResponses.forEach(d => {
+        if (d.final_ranking) {
+          d.final_ranking.forEach(r => {
+            if (!modelScores[r.model]) modelScores[r.model] = [];
+            modelScores[r.model].push(r.unified_score);
+          });
+        }
+      });
+      const sorted = Object.entries(modelScores)
+        .map(([model, scores]) => ({ model, avgScore: scores.reduce((a,b) => a+b, 0) / scores.length }))
+        .sort((a, b) => b.avgScore - a.avgScore);
+      return sorted.slice(0, 3).map((r, i) => ({
+        rank: i + 1,
+        name: r.model,
+        score: r.avgScore,
+        provider: ''
+      }));
+    }
+
     function App() {
       const [prompt, setPrompt] = useState('');
       const [availableModels, setAvailableModels] = useState(FALLBACK_MODELS);
       const [loadingModels, setLoadingModels] = useState(true);
       const [selectedModels, setSelectedModels] = useState([]);
       const [searchQuery, setSearchQuery] = useState('');
-      const [suggestionCriteria, setSuggestionCriteria] = useState({
-        priority1: 'flagship'
-      });
+      const [suggestionCriteria, setSuggestionCriteria] = useState({ priority1: 'flagship' });
       const [suggestions, setSuggestions] = useState([]);
       const [curatedPresets, setCuratedPresets] = useState(FALLBACK_PRESETS);
       const [apiKey, setApiKey] = useState('');
       const [friendCode, setFriendCode] = useState('');
-      const [showApiSettings, setShowApiSettings] = useState(false);
+      const [temperature, setTemperature] = useState(0.7);
+      const [maxTokens, setMaxTokens] = useState(2000);
+      const [enableSupremeCourt, setEnableSupremeCourt] = useState(false);
+      const [battleRuns, setBattleRuns] = useState(1);
+      const [currentRun, setCurrentRun] = useState(0); // 0 = not running, 1+ = which run we're on
+      const [loading, setLoading] = useState(false);
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
+      const [reports, setReports] = useState([]);
+      const [activeReportId, setActiveReportId] = useState(null);
+      const MAX_REPORTS = 20;
+      const [showSettings, setShowSettings] = useState(false);
+      const [showPodium, setShowPodium] = useState(false);
+      const [showConfetti, setShowConfetti] = useState(false);
+      const [resultData, setResultData] = useState(null); // Parsed ranking data from response
+      const [heroVisible, setHeroVisible] = useState(true);
+      const formRef = useRef(null);
 
-      // Fetch models from OpenRouter API
+      // Fetch models from OpenRouter
       useEffect(() => {
         const fetchModels = async () => {
           try {
             const response = await fetch('https://openrouter.ai/api/v1/models');
             const data = await response.json();
-            
-            // Filter and format models (keep only major providers and text-only models)
             const formattedModels = data.data
               .filter(m => {
                 const provider = m.id.split('/')[0];
-                const isTextModel = !m.id.toLowerCase().includes('vision') && 
-                                   !m.id.toLowerCase().includes('audio') && 
-                                   !m.id.toLowerCase().includes('image') &&
-                                   !m.id.toLowerCase().includes('whisper') &&
-                                   !m.id.toLowerCase().includes('dall-e') &&
-                                   !m.id.toLowerCase().includes('tts') &&
-                                   !m.id.toLowerCase().includes('embedding') &&
-                                   !m.id.toLowerCase().includes('moderation');
-                return ['openai', 'anthropic', 'google', 'meta-llama', 'mistralai', 'cohere'].includes(provider) && isTextModel;
+                const isText = !m.id.toLowerCase().includes('vision') &&
+                  !m.id.toLowerCase().includes('audio') &&
+                  !m.id.toLowerCase().includes('image') &&
+                  !m.id.toLowerCase().includes('whisper') &&
+                  !m.id.toLowerCase().includes('dall-e') &&
+                  !m.id.toLowerCase().includes('tts') &&
+                  !m.id.toLowerCase().includes('embedding') &&
+                  !m.id.toLowerCase().includes('moderation');
+                return ['openai','anthropic','google','meta-llama','mistralai','cohere'].includes(provider) && isText;
               })
               .map(m => {
                 const provider = m.id.split('/')[0];
-                const providerCapitalized = provider.charAt(0).toUpperCase() + provider.slice(1);
-                // Remove provider prefix from display name if present
+                const provCap = provider.charAt(0).toUpperCase() + provider.slice(1);
                 let displayName = m.name;
-                const prefixes = ['OpenAI: ', 'Anthropic: ', 'Google: ', 'Meta: ', 'Mistral: ', 'Cohere: '];
-                prefixes.forEach(prefix => {
-                  if (displayName.startsWith(prefix)) {
-                    displayName = displayName.substring(prefix.length);
-                  }
+                ['OpenAI: ','Anthropic: ','Google: ','Meta: ','Mistral: ','Cohere: '].forEach(p => {
+                  if (displayName.startsWith(p)) displayName = displayName.substring(p.length);
                 });
-                
-                return {
-                  id: m.id,
-                  name: displayName,
-                  provider: providerCapitalized,
-                  contextLength: m.context_length,
-                  pricing: m.pricing
-                };
+                return { id: m.id, name: displayName, provider: provCap, contextLength: m.context_length, pricing: m.pricing };
               })
-              .sort((a, b) => {
-                // Sort by provider then by name
-                if (a.provider !== b.provider) return a.provider.localeCompare(b.provider);
-                return a.name.localeCompare(b.name);
-              });
-            
+              .sort((a, b) => a.provider !== b.provider ? a.provider.localeCompare(b.provider) : a.name.localeCompare(b.name));
             setAvailableModels(formattedModels.length > 0 ? formattedModels : FALLBACK_MODELS);
-          } catch (error) {
-            console.error('Failed to fetch models:', error);
+          } catch (err) {
+            console.error('Failed to fetch models:', err);
             setAvailableModels(FALLBACK_MODELS);
-          } finally {
-            setLoadingModels(false);
-          }
+          } finally { setLoadingModels(false); }
         };
-        
         fetchModels();
       }, []);
 
-      // Fetch curated presets from n8n workflow
+      // Fetch curated presets
       useEffect(() => {
         const fetchPresets = async () => {
           try {
-            const response = await fetch(PRESETS_URL);
-            const data = await response.json();
+            const resp = await fetch(PRESETS_URL);
+            const data = await resp.json();
             setCuratedPresets(data);
-            console.log('Loaded presets updated:', data.lastUpdated);
-          } catch (error) {
-            console.warn('Failed to fetch presets, using fallback:', error);
-            setCuratedPresets(FALLBACK_PRESETS);
-          }
+          } catch (err) { setCuratedPresets(FALLBACK_PRESETS); }
         };
-        
         fetchPresets();
       }, []);
-      const [temperature, setTemperature] = useState(0.7);
-      const [maxTokens, setMaxTokens] = useState(2000);
-      const [enableSupremeCourt, setEnableSupremeCourt] = useState(false);
-      const [loading, setLoading] = useState(false);
-      const [result, setResult] = useState(null);
-      const [error, setError] = useState(null);
 
-      // Auto-focus on textarea when component mounts
+      // Auto-focus textarea
       useEffect(() => {
-        const textarea = document.querySelector('textarea');
-        if (textarea && !result) {
-          textarea.focus();
+        if (!result) {
+          const ta = document.querySelector('.prompt-textarea');
+          if (ta) ta.focus();
         }
       }, [result]);
-      
-      // Initialize Mini Arena after component mounts
+
+      // Listen for backdrop close
       useEffect(() => {
-        const timer = setTimeout(() => {
-          if (window.MiniArena) {
-            console.log('Initializing MiniArena...');
-            window.MiniArena.init();
-          }
-        }, 200);
-        return () => clearTimeout(timer);
+        const handler = () => setShowSettings(false);
+        window.addEventListener('close-settings', handler);
+        return () => window.removeEventListener('close-settings', handler);
       }, []);
 
-      // Example prompts - designed to show meaningful differences between models
+      // Init Mini Arena
+      useEffect(() => {
+        const t = setTimeout(() => { if (window.MiniArena) window.MiniArena.init(); }, 500);
+        return () => clearTimeout(t);
+      }, []);
+
       const examplePrompts = [
-        "Explain quantum entanglement in exactly 2 sentences, one technical and one metaphorical",
-        "Write a professional apology email for missing a deadline, maintaining both accountability and confidence",
-        "Describe the color blue to someone who has never seen it, without using other colors",
-        "In 50 words, argue why dogs are better than cats. Then in 50 words, argue the opposite"
+        "Here are monthly revenues for 3 products: Product A: [12K, 15K, 11K, 18K, 22K, 19K], Product B: [8K, 7K, 9K, 6K, 5K, 4K], Product C: [3K, 5K, 8K, 12K, 15K, 21K]. Identify trends, flag the underperformer, and recommend a reallocation strategy with projected impact.",
+        "Extract all companies, roles, and dates from this text: 'Sarah joined Google as a PM in 2018, moved to Stripe as Head of Product in 2021, then co-founded Nexus AI in March 2024 where she raised a $12M Series A from a]16z.' Output as structured JSON.",
+        "A user reports: 'API returns 504 after ~30s on POST /v2/inference with 8K token payload, works fine under 2K tokens. Started 3 days ago, no deploy since last week. CloudWatch shows Lambda duration spikes.' Walk through a systematic debugging process and give me a root cause hypothesis ranked by likelihood.",
+        "Compare these two contract clauses and explain which is more favorable to the client: Clause A: 'Termination for convenience with 90 days notice and payment of fees through termination date.' Clause B: 'Termination for convenience with 30 days notice and payment of fees for the full remaining term.'"
       ];
 
       const toggleModel = (modelId) => {
         if (selectedModels.includes(modelId)) {
-          // Allow deselection always (the form validation will check for minimum 2 at submit)
           setSelectedModels(selectedModels.filter(m => m !== modelId));
         } else {
           setSelectedModels([...selectedModels, modelId]);
         }
       };
 
-      // Calculate model suggestions based on criteria
       const calculateSuggestions = () => {
-        if (availableModels.length === 0) {
-          setSuggestions([]);
-          return;
-        }
-
-        const { priority1 } = suggestionCriteria;
-        const presetIds = curatedPresets[priority1] || [];
-        
-        // Filter to only models that exist in availableModels
-        const availablePresets = presetIds.filter(presetId => 
-          availableModels.some(m => m.id === presetId)
-        );
-        
-        setSuggestions(availablePresets);
+        if (availableModels.length === 0) { setSuggestions([]); return; }
+        const presetIds = curatedPresets[suggestionCriteria.priority1] || [];
+        const available = presetIds.filter(pid => availableModels.some(m => m.id === pid));
+        setSuggestions(available);
       };
 
-      React.useEffect(() => {
-        calculateSuggestions();
-      }, [suggestionCriteria, availableModels, curatedPresets]);
+      React.useEffect(() => { calculateSuggestions(); }, [suggestionCriteria, availableModels, curatedPresets]);
+
+      // Settings drawer sync
+      useEffect(() => {
+        const drawer = document.getElementById('settingsDrawer');
+        const backdrop = document.getElementById('settingsBackdrop');
+        if (drawer && backdrop) {
+          if (showSettings) { drawer.classList.add('open'); backdrop.classList.add('open'); }
+          else { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+        }
+      }, [showSettings]);
+
+      // Render settings drawer via portal
+      const SettingsPortal = () => {
+        const drawerEl = document.getElementById('settingsDrawer');
+        if (!drawerEl) return null;
+        return ReactDOM.createPortal(
+          <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-amber-100 font-cinzel">⚙️ Settings</h2>
+              <button onClick={() => setShowSettings(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 hover:text-amber-400 hover:bg-amber-900/30 transition-all text-lg">×</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-amber-300 mb-3 flex items-center gap-2">🔑 API Authentication</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-amber-500 mb-1">OpenRouter API Key</label>
+                    <input type="password" placeholder="sk-or-v1-..." value={apiKey}
+                      onChange={(e) => { setApiKey(e.target.value); if(e.target.value) setFriendCode(''); }}
+                      className="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+                    <p className="text-[10px] text-amber-800 mt-1">
+                      Get yours at <a href="https://openrouter.ai/keys" target="_blank" className="text-amber-600 hover:text-amber-400 underline">openrouter.ai/keys</a>
+                    </p>
+                  </div>
+                  <div className="text-center text-[10px] text-amber-800 font-medium">— OR —</div>
+                  <div>
+                    <label className="block text-xs font-medium text-amber-500 mb-1">Friend Code</label>
+                    <input type="text" placeholder="Enter friend code" value={friendCode}
+                      onChange={(e) => { setFriendCode(e.target.value); if(e.target.value) setApiKey(''); }}
+                      className="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+                    <p className="text-[10px] text-amber-800 mt-1">Use shared API quota with a friend code</p>
+                  </div>
+                </div>
+              </div>
+              <hr className="border-amber-900/20" />
+              <div>
+                <h3 className="text-sm font-semibold text-amber-300 mb-3">🎛️ Advanced Parameters</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-amber-500 mb-2">
+                      Temperature: {temperature}
+                      <Tooltip text="Controls randomness. Lower (0-0.3) = consistent, factual. Higher (0.7-1.0) = creative, varied"><span></span></Tooltip>
+                    </label>
+                    <input type="range" min="0" max="1" step="0.1" value={temperature}
+                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                      className="w-full accent-amber-600" />
+                    <p className="text-[10px] text-amber-800 mt-1">Lower = deterministic, Higher = creative</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-amber-500 mb-2">
+                      Max tokens: {maxTokens}
+                      <Tooltip text="Maximum length of each model's response. One token ≈ 4 characters"><span></span></Tooltip>
+                    </label>
+                    <input type="range" min="100" max="5000" step="100" value={maxTokens}
+                      onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                      className="w-full accent-amber-600" />
+                    <p className="text-[10px] text-amber-800 mt-1">Maximum response length per model</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {(apiKey || friendCode) && (
+              <div className="rounded-lg p-3 border border-emerald-800/30" style={{ background: 'rgba(16,185,129,0.08)' }}>
+                <div className="flex items-center gap-2 text-xs text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  {apiKey ? 'API Key configured' : 'Friend code configured'}
+                </div>
+              </div>
+            )}
+          </div>,
+          drawerEl
+        );
+      };
+
+      const scrollToForm = () => {
+        setHeroVisible(false);
+        setTimeout(() => {
+          if (formRef.current) formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      };
 
       const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!prompt.trim()) {
-          setError('Please enter a prompt');
-          return;
-        }
+        if (!prompt.trim()) { setError('Please enter a prompt'); return; }
+        if (selectedModels.length < 2) { setError('Select at least 2 models'); return; }
+        if (!apiKey && !friendCode) { setError('Please enter your OpenRouter API key above (step 3) — it\'s free!'); return; }
 
-        if (selectedModels.length < 2) {
-          setError('Select at least 2 models');
-          return;
-        }
+        const totalRuns = battleRuns;
+        setLoading(true); setError(null); setResult(null);
+        setShowPodium(false); setShowConfetti(false); setResultData(null);
+        setCurrentRun(1);
+        if (window.BattleArena) { window.BattleArena.show(); window.BattleArena.setRunInfo(1, totalRuns); }
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
 
-        // Validate API key or friend code
-        if (!apiKey && !friendCode) {
-          setError('Please provide your OpenRouter API key or friend code');
-          return;
-        }
+        const payload = {
+          prompt, models: selectedModels, temperature, max_tokens: maxTokens,
+          api_key: apiKey || null, friend_code: friendCode || null,
+          enable_supreme_court: enableSupremeCourt
+        };
+        const config = { prompt, models: selectedModels, temperature, max_tokens: maxTokens,
+          enable_supreme_court: enableSupremeCourt, api_key_used: apiKey ? 'own' : 'friend' };
 
-        setLoading(true);
-        setError(null);
-        setResult(null);
-
-        // Show battle animation with combat
-        if (window.BattleArena) {
-          window.BattleArena.show();
-        }
-
-        // Scroll to top after state update to see progress
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100);
+        let lastHtml = null;
+        let lastRanking = null;
+        const allJsonResponses = [];
 
         try {
-          const response = await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              prompt: prompt,
-              models: selectedModels,
-              temperature: temperature,
-              max_tokens: maxTokens,
-              api_key: apiKey || null,
-              friend_code: friendCode || null,
-              enable_supreme_court: enableSupremeCourt
-            })
-          });
+          for (let run = 1; run <= totalRuns; run++) {
+            setCurrentRun(run);
 
-          if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
+            // Show battle animation for each run (re-show if it was hidden)
+            if (run > 1 && window.BattleArena) { window.BattleArena.show(); }
+            if (window.BattleArena) window.BattleArena.setRunInfo(run, totalRuns);
+
+            const response = await fetch(WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status} (run ${run}/${totalRuns})`);
+            const jsonResponse = await response.json();
+            allJsonResponses.push(jsonResponse);
+
+            const html = generateHTMLFromJSON(jsonResponse);
+            const ranking = extractRankingFromJSON(jsonResponse);
+
+            const newReport = {
+              id: Date.now() + run,
+              timestamp: new Date(),
+              html,
+              jsonData: jsonResponse,
+              config,
+              runLabel: totalRuns > 1 ? `Run ${run}/${totalRuns}` : null
+            };
+
+            // Add report progressively
+            setReports(prev => [...prev, newReport].slice(-MAX_REPORTS));
+            setActiveReportId(newReport.id);
+            setResult(html);
+            lastHtml = html;
+            lastRanking = ranking;
+
+            // Brief pause between runs for UX (not on last run)
+            if (run < totalRuns) {
+              if (window.BattleArena) window.BattleArena.hide();
+              await new Promise(resolve => setTimeout(resolve, 800));
+            }
           }
 
-          const html = await response.text();
-          
-          // Hide battle animation
-          if (window.BattleArena) {
-            window.BattleArena.hide();
+          // Final: hide battle, show podium + confetti
+          if (window.BattleArena) window.BattleArena.hide();
+
+          // Generate aggregate report if multiple runs
+          if (totalRuns > 1 && allJsonResponses.length > 1) {
+            const aggHtml = generateAggregateReport(allJsonResponses);
+            if (aggHtml) {
+              const aggReport = {
+                id: Date.now() + 999,
+                timestamp: new Date(),
+                html: aggHtml,
+                config,
+                runLabel: `📊 Summary (${totalRuns} runs)`,
+                isAggregate: true
+              };
+              setReports(prev => [...prev, aggReport].slice(-MAX_REPORTS));
+              setActiveReportId(aggReport.id);
+              setResult(aggHtml);
+
+              // Use aggregate ranking for podium
+              const aggRanking = extractAggregateRanking(allJsonResponses);
+              if (aggRanking) lastRanking = aggRanking;
+            }
           }
-          
-          setResult(html);
-          
-          // Smooth scroll to results after a short delay
-          setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 300);
+
+          if (lastRanking) setResultData(lastRanking);
+
+          setTimeout(() => { setShowPodium(true); }, 400);
+          setTimeout(() => { setShowConfetti(true); }, 1200);
+          setTimeout(() => { setShowConfetti(false); }, 5000);
+          setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 300);
         } catch (err) {
-          // Hide battle animation on error
-          if (window.BattleArena) {
-            window.BattleArena.hide();
-          }
-          
+          if (window.BattleArena) window.BattleArena.hide();
           setError(`Error: ${err.message}`);
-          // Auto-dismiss error after 8 seconds
           setTimeout(() => setError(null), 8000);
         } finally {
           setLoading(false);
+          setCurrentRun(0);
         }
       };
 
-      return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <div className="text-center mb-10">
-            {/* Gladiator Logo */}
-            <div className="inline-flex items-center justify-center w-20 h-20 mb-5 rounded-3xl bg-gradient-to-br from-red-500 via-orange-500 to-yellow-500 shadow-2xl transform hover:rotate-6 transition-transform">
-              <span className="text-4xl">⚔️</span>
-            </div>
-            
-            <h1 className="text-6xl font-black mb-3 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent">
-              LLM Arena
-            </h1>
-            <p className="text-xl text-gray-700 font-semibold mb-6">
-              Where Language Models Battle for Glory
-            </p>
-            
-            {/* Mini Arena Preview with 5 LLMs */}
-            <div className="mini-arena">
-              <div className="mini-gladiator mini-pos-1">
-                <div className="mini-avatar mini-gpt">🛡️</div>
-                <div className="mini-health-bar">
-                  <div className="mini-health-fill" id="miniHealth1"></div>
-                </div>
-                <div className="mini-name">GPT</div>
-              </div>
-              <div className="mini-gladiator mini-pos-2">
-                <div className="mini-avatar mini-gemini">⚔️</div>
-                <div className="mini-health-bar">
-                  <div className="mini-health-fill" id="miniHealth2"></div>
-                </div>
-                <div className="mini-name">Gemini</div>
-              </div>
-              <div className="mini-gladiator mini-pos-3">
-                <div className="mini-avatar mini-claude">🗡️</div>
-                <div className="mini-health-bar">
-                  <div className="mini-health-fill" id="miniHealth3"></div>
-                </div>
-                <div className="mini-name">Claude</div>
-              </div>
-              <div className="mini-gladiator mini-pos-4">
-                <div className="mini-avatar mini-mistral">⚡</div>
-                <div className="mini-health-bar">
-                  <div className="mini-health-fill" id="miniHealth4"></div>
-                </div>
-                <div className="mini-name">Mistral</div>
-              </div>
-              <div className="mini-gladiator mini-pos-5">
-                <div className="mini-avatar mini-llama">🦙</div>
-                <div className="mini-health-bar">
-                  <div className="mini-health-fill" id="miniHealth5"></div>
-                </div>
-                <div className="mini-name">Llama</div>
-              </div>
-              <div className="mini-arena-circle"></div>
-            </div>
+      const handleReplay = async () => {
+        const activeReport = reports.find(r => r.id === activeReportId);
+        if (!activeReport || loading) return;
+        if (!apiKey && !friendCode) { setError('Please enter your API key (step 3) to replay'); return; }
+        const rc = activeReport.config;
+        setLoading(true); setError(null); setResult(null);
+        setShowPodium(false); setShowConfetti(false); setResultData(null);
+        if (window.BattleArena) window.BattleArena.show();
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+        try {
+          const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: rc.prompt, models: rc.models, temperature: rc.temperature,
+              max_tokens: rc.max_tokens, api_key: apiKey || null, friend_code: friendCode || null,
+              enable_supreme_court: rc.enable_supreme_court
+            })
+          });
+          if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+          const jsonResponse2 = await response.json();
+          if (window.BattleArena) window.BattleArena.hide();
+          const html = generateHTMLFromJSON(jsonResponse2);
+          const ranking2 = extractRankingFromJSON(jsonResponse2);
+          if (ranking2) setResultData(ranking2);
+          const newReport = { id: Date.now(), timestamp: new Date(), html, jsonData: jsonResponse2, config: rc };
+          setReports(prev => [...prev, newReport].slice(-MAX_REPORTS));
+          setActiveReportId(newReport.id);
+          setResult(html);
+          setTimeout(() => setShowPodium(true), 400);
+          setTimeout(() => setShowConfetti(true), 1200);
+          setTimeout(() => setShowConfetti(false), 5000);
+          setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 300);
+        } catch (err) {
+          if (window.BattleArena) window.BattleArena.hide();
+          setError(`Replay failed: ${err.message}`);
+          setTimeout(() => setError(null), 8000);
+        } finally { setLoading(false); }
+      };
 
-            {/* Why it's useful */}
-            <div className="max-w-3xl mx-auto mb-10 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border-2 border-orange-200 shadow-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center justify-center gap-2">
-                <span className="text-2xl">🎯</span>
-                Why Use LLM Arena?
-              </h3>
-              <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                <strong>Stop guessing which AI model is best for your task.</strong> Whether you're choosing a model for your product, 
-                testing prompt engineering strategies, or just curious about AI capabilities—Arena gives you objective, 
-                side-by-side comparisons with peer-reviewed rankings.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-white/70 rounded-lg p-3 border border-orange-200">
-                  <div className="font-bold text-orange-700 mb-1">🔬 For Developers</div>
-                  <div className="text-gray-600">Test models before committing to APIs</div>
+      // Confetti renderer
+      const ConfettiEffect = () => {
+        if (!showConfetti) return null;
+        const pieces = [];
+        for (let i = 0; i < 80; i++) {
+          const colors = ['#ffd700','#ff6347','#4285f4','#10a37f','#cc785c','#ff7000','#5436da','#ea4335','#34a853'];
+          pieces.push(
+            <div key={i} className="confetti-piece" style={{
+              left: Math.random() * 100 + '%', top: '-10px',
+              width: (4 + Math.random() * 8) + 'px',
+              height: (6 + Math.random() * 10) + 'px',
+              background: colors[i % colors.length],
+              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+              '--dur': (2 + Math.random() * 3) + 's',
+              '--delay': (Math.random() * 1.5) + 's',
+              '--rot': (360 + Math.random() * 720) + 'deg',
+            }} />
+          );
+        }
+        return <>{pieces}</>;
+      };
+
+      // Podium component
+      const PodiumReveal = () => {
+        const [step, setStep] = useState(0);
+        useEffect(() => {
+          const t1 = setTimeout(() => setStep(1), 300);
+          const t2 = setTimeout(() => setStep(2), 800);
+          const t3 = setTimeout(() => setStep(3), 1300);
+          return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+        }, []);
+
+        // Use real ranking data if available, otherwise fall back to selection order
+        let topModels;
+        if (resultData && resultData.length >= 2) {
+          topModels = resultData.slice(0, 3).map((r, i) => {
+            // Try to match provider from the model name
+            const name = r.name || '';
+            let provider = r.provider || '';
+            if (!provider) {
+              if (name.match(/gpt|openai/i)) provider = 'OpenAI';
+              else if (name.match(/claude|anthropic/i)) provider = 'Anthropic';
+              else if (name.match(/gemini|google/i)) provider = 'Google';
+              else if (name.match(/llama|meta/i)) provider = 'Meta-llama';
+              else if (name.match(/mistral|ministral/i)) provider = 'Mistralai';
+              else if (name.match(/cohere|command/i)) provider = 'Cohere';
+            }
+            const c = getProviderColor(provider);
+            return { rank: i + 1, name: name, color: c.bg, score: r.score };
+          });
+        } else {
+          topModels = selectedModels.slice(0, 3).map((id, i) => {
+            const m = availableModels.find(am => am.id === id);
+            const c = getProviderColor(m?.provider || '');
+            return { rank: i + 1, name: m?.name || id.split('/')[1] || id, color: c.bg };
+          });
+        }
+        while (topModels.length < 3) topModels.push({ rank: topModels.length + 1, name: '—', color: '#666' });
+
+        const podiumOrder = [topModels[1], topModels[0], topModels[2]]; // 2nd, 1st, 3rd
+        const heights = [90, 130, 70];
+
+        return (
+          <div className="flex items-end justify-center gap-4 py-4 podium-container">
+            {podiumOrder.map((p, i) => (
+              <div key={i} className="flex flex-col items-center" style={{
+                opacity: step > i ? 1 : 0,
+                transform: step > i ? 'translateY(0)' : 'translateY(60px)',
+                transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.3}s`
+              }}>
+                {p.rank === 1 && step >= 2 && <div className="text-4xl mb-2 champion-crown">👑</div>}
+                <div className="rounded-full flex items-center justify-center text-white font-bold shadow-xl mb-2"
+                  style={{
+                    width: p.rank === 1 ? 56 : 48, height: p.rank === 1 ? 56 : 48,
+                    background: `linear-gradient(135deg, ${p.color}, ${p.color}cc)`,
+                    boxShadow: p.rank === 1 ? `0 0 30px ${p.color}66, 0 0 60px ${p.color}33` : `0 4px 20px rgba(0,0,0,0.4)`,
+                    fontSize: p.rank === 1 ? 20 : 16
+                  }}>
+                  #{p.rank}
                 </div>
-                <div className="bg-white/70 rounded-lg p-3 border border-orange-200">
-                  <div className="font-bold text-orange-700 mb-1">📊 For Product Teams</div>
-                  <div className="text-gray-600">Data-driven model selection decisions</div>
+                <div className="text-xs font-bold text-center mb-1 max-w-[100px] truncate" style={{ color: p.color }}>
+                  {p.name}
                 </div>
-                <div className="bg-white/70 rounded-lg p-3 border border-orange-200">
-                  <div className="font-bold text-orange-700 mb-1">🎓 For Researchers</div>
-                  <div className="text-gray-600">Unbiased multi-judge evaluation</div>
-                </div>
+                <div className="podium-bar rounded-t-lg" style={{
+                  width: p.rank === 1 ? 90 : 75,
+                  height: step > i ? heights[i] : 0,
+                  background: `linear-gradient(to top, ${p.color}33, ${p.color}11)`,
+                  borderTop: `3px solid ${p.color}`,
+                  borderLeft: `1px solid ${p.color}33`,
+                  borderRight: `1px solid ${p.color}33`,
+                }} />
               </div>
-            </div>
-            
-            {/* Visual process flow with gladiator theme */}
-            <div className="flex items-center justify-center gap-3 text-sm text-gray-600 mb-8 flex-wrap">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border-2 border-orange-200">
-                <span className="text-xl">🗡️</span>
-                <span className="font-semibold">Challenge</span>
-              </div>
-              <span className="text-2xl text-orange-400">⚡</span>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border-2 border-orange-200">
-                <span className="text-xl">⚔️</span>
-                <span className="font-semibold">Battle</span>
-              </div>
-              <span className="text-2xl text-orange-400">⚡</span>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border-2 border-orange-200">
-                <span className="text-xl">⚖️</span>
-                <span className="font-semibold">Judgment</span>
-              </div>
-              <span className="text-2xl text-orange-400">⚡</span>
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full shadow-lg">
-                <span className="text-xl">👑</span>
-                <span className="font-bold text-white">Champion</span>
-              </div>
-            </div>
+            ))}
           </div>
+        );
+      };
 
-          {!result ? (
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Progress indicator during loading */}
-                {loading && (
-                  <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-5 shadow-md">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
-                      <span className="font-semibold text-orange-900 text-lg">⚔️ Battle in progress...</span>
-                    </div>
-                    <div className="space-y-2 text-sm text-orange-700">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">✓</span>
-                        <span>Gladiators entering the arena ({selectedModels.length} models)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="animate-pulse">⚔️</div>
-                        <span>Judges evaluating the combat ({selectedModels.length + (enableSupremeCourt ? 3 : 0)} judges)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400">○</span>
-                        <span className="text-gray-500">Crowning the champion...</span>
-                      </div>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="mt-4 w-full bg-orange-100 rounded-full h-2 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-pulse" style={{width: '60%', transition: 'width 0.5s'}}></div>
-                    </div>
+      // Filtered models
+      const filteredModels = availableModels.filter(model =>
+        searchQuery === '' ||
+        model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        model.provider.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      const groupedModels = filteredModels.reduce((acc, model) => {
+        if (!acc[model.provider]) acc[model.provider] = [];
+        acc[model.provider].push(model);
+        return acc;
+      }, {});
+
+      return (
+        <div className="relative z-10">
+          <ConfettiEffect />
+          <SettingsPortal />
+
+          {/* ========== HERO SECTION ========== */}
+          {heroVisible && !result && (
+            <section className="hero-section">
+              <div className="hero-arena-glow"></div>
+
+              <div className="relative z-10 flex flex-col items-center text-center px-6">
+                {/* Mini Arena */}
+                <div className="mini-arena-container mb-6 fade-in-up">
+                  <div className="mini-arena-ring"></div>
+                  <div className="mini-gladiator mg-1">
+                    <div className="mini-avatar ma-gpt">🛡️</div>
+                    <div className="mini-hp-bar"><div className="mini-hp-fill" id="miniHealth1"></div></div>
+                    <div className="mini-name">GPT</div>
                   </div>
-                )}
+                  <div className="mini-gladiator mg-2">
+                    <div className="mini-avatar ma-gemini">⚔️</div>
+                    <div className="mini-hp-bar"><div className="mini-hp-fill" id="miniHealth2"></div></div>
+                    <div className="mini-name">Gemini</div>
+                  </div>
+                  <div className="mini-gladiator mg-3">
+                    <div className="mini-avatar ma-claude">🗡️</div>
+                    <div className="mini-hp-bar"><div className="mini-hp-fill" id="miniHealth3"></div></div>
+                    <div className="mini-name">Claude</div>
+                  </div>
+                  <div className="mini-gladiator mg-4">
+                    <div className="mini-avatar ma-mistral">⚡</div>
+                    <div className="mini-hp-bar"><div className="mini-hp-fill" id="miniHealth4"></div></div>
+                    <div className="mini-name">Mistral</div>
+                  </div>
+                  <div className="mini-gladiator mg-5">
+                    <div className="mini-avatar ma-llama">🦙</div>
+                    <div className="mini-hp-bar"><div className="mini-hp-fill" id="miniHealth5"></div></div>
+                    <div className="mini-name">Llama</div>
+                  </div>
+                </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">1</span>
-                    📝 Your question / prompt
-                  </label>
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Ex: Explain the theory of relativity in 3 simple sentences"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows="4"
-                    required
-                  />
-                  
-                  {/* Example prompts */}
-                  <div className="mt-3">
-                    <p className="text-xs text-gray-500 mb-2">💡 Try an example:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {examplePrompts.map((example, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setPrompt(example)}
-                          className="text-xs px-3 py-2 bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 text-gray-700 hover:text-gray-900 rounded-lg transition-all border border-orange-200 hover:border-orange-400 hover:shadow-md"
-                        >
-                          {example.substring(0, 45)}...
+                <h1 className="hero-title text-6xl md:text-7xl mb-4 fade-in-up stagger-2">
+                  LLM Arena
+                </h1>
+                <p className="text-amber-400/70 text-lg md:text-xl mb-3 max-w-xl font-cinzel fade-in-up stagger-3" style={{ letterSpacing: '0.05em' }}>
+                  Which AI actually solves your task best?<br/>Test them side-by-side and find out.
+                </p>
+                <p className="text-amber-600/50 text-xs mb-8 max-w-md fade-in-up stagger-3" style={{ letterSpacing: '0.02em' }}>
+                  Paste any prompt — data analysis, coding, writing, reasoning — and let independent AI judges rank the responses.
+                </p>
+
+                <button onClick={scrollToForm} className="hero-cta px-10 py-4 rounded-xl font-cinzel font-bold text-lg text-amber-950 tracking-wider fade-in-up stagger-4">
+                  ⚔️ Enter the Arena
+                </button>
+
+                <p className="mt-5 text-[11px] text-amber-700/40 uppercase tracking-[0.15em] fade-in-up stagger-5">
+                  Free · No account needed · Results in ~30s
+                </p>
+              </div>
+
+              <div className="scroll-indicator">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(218,165,32,0.4)" strokeWidth="2">
+                  <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                </svg>
+              </div>
+            </section>
+          )}
+
+          {/* ========== MAIN CONTENT ========== */}
+          <div ref={formRef} className="container mx-auto px-4 py-8 max-w-5xl">
+
+            {/* Back to hero link when scrolled */}
+            {!heroVisible && !result && (
+              <div className="mb-6">
+                <button onClick={() => { setHeroVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="text-amber-700 hover:text-amber-500 text-xs flex items-center gap-1 transition-colors">
+                  ← Back to arena
+                </button>
+              </div>
+            )}
+
+            {!result ? (
+              /* ========== FORM ========== */
+              <div className="form-section rounded-2xl shadow-2xl p-6 md:p-8 fade-in-up">
+                <form onSubmit={handleSubmit} className="space-y-6">
+
+                  {/* Header row: title + settings button */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                        style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>⚔️</div>
+                      <div>
+                        <h2 className="text-lg font-bold text-amber-100 font-cinzel">New Battle</h2>
+                        <p className="text-[11px] text-amber-700">Configure your arena and start the fight</p>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setShowSettings(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-amber-500 border border-amber-800/40 hover:bg-amber-900/30 transition-all hover:border-amber-600/60">
+                      <span>🎛️</span>
+                      <span>Advanced</span>
+                      {(apiKey || friendCode) && <span className="w-2 h-2 rounded-full bg-emerald-500"></span>}
+                    </button>
+                  </div>
+
+                  {/* Loading progress */}
+                  {loading && (
+                    <div className="rounded-xl p-5 border border-amber-700/40" style={{ background: 'rgba(218,165,32,0.05)' }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="font-bold text-amber-300 font-cinzel tracking-wide">⚔️ Battle in progress...</span>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-amber-600">
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-500">✓</span>
+                          <span>Gladiators entering the arena ({selectedModels.length} models)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="animate-pulse text-amber-400">⚔️</div>
+                          <span>Judges evaluating ({selectedModels.length + (enableSupremeCourt ? 3 : 0)} judges)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-amber-800">○</span>
+                          <span className="text-amber-800">Crowning the champion...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 1: Prompt */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-amber-200 mb-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold"
+                        style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)', color: '#1a0f06' }}>1</span>
+                      Your challenge
+                    </label>
+                    <textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Ex: Explain the theory of relativity in 3 simple sentences"
+                      className="prompt-textarea input-dark w-full px-4 py-3 rounded-xl text-sm resize-none"
+                      rows="4" required
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-[10px] text-amber-700 mr-1 mt-1">💡 Try:</span>
+                      {[
+                        { label: '📊 Revenue analysis', idx: 0 },
+                        { label: '🔍 Entity extraction', idx: 1 },
+                        { label: '🐛 Debug 504 error', idx: 2 },
+                        { label: '📑 Contract comparison', idx: 3 },
+                      ].map(({ label, idx }) => (
+                        <button key={idx} type="button" onClick={() => setPrompt(examplePrompts[idx])}
+                          className="text-[10px] px-2.5 py-1 rounded-full text-amber-500 border border-amber-800/30 hover:bg-amber-900/30 hover:border-amber-600/50 transition-all">
+                          {label}
                         </button>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">2</span>
-                    🤖 Select models to evaluate (min 2)
-                  </label>
-                  
-                  {/* Suggestion criteria */}
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm font-semibold text-blue-900">💡 Smart Suggestions</span>
-                      <Tooltip text="Curated model combinations optimized for different use cases: speed, quality, or cost">
-                        <span></span>
-                      </Tooltip>
+                  {/* STEP 2: Models */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-amber-200 mb-3">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold"
+                        style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)', color: '#1a0f06' }}>2</span>
+                      Choose your gladiators
+                      <span className="text-xs font-normal text-amber-600 ml-1">(min 2)</span>
+                    </label>
+
+                    {/* Preset filters */}
+                    <div className="flex gap-2 mb-4 flex-wrap">
+                      {[
+                        { key: 'flagship', label: '🏆 Flagship', desc: 'Top-tier' },
+                        { key: 'fast', label: '⚡ Fast', desc: 'Best value' },
+                        { key: 'budget', label: '💰 Budget', desc: 'Affordable' },
+                        { key: 'context', label: '📏 Context', desc: 'Big windows' },
+                      ].map(preset => (
+                        <button key={preset.key} type="button"
+                          onClick={() => setSuggestionCriteria({ priority1: preset.key })}
+                          className={`preset-btn px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            suggestionCriteria.priority1 === preset.key
+                              ? 'active text-amber-100 border-amber-600/60'
+                              : 'text-amber-600 border-amber-800/30 hover:text-amber-400 hover:bg-amber-900/20'
+                          }`}
+                          style={{
+                            background: suggestionCriteria.priority1 === preset.key ? 'rgba(218,165,32,0.15)' : 'transparent',
+                            border: '1px solid'
+                          }}>
+                          {preset.label}
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Choose a preset</label>
-                      <select
-                        value={suggestionCriteria.priority1}
-                        onChange={(e) => setSuggestionCriteria({priority1: e.target.value})}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="flagship">🏆 Flagship (top-tier models)</option>
-                        <option value="fast">⚡ Fast & Cheap (best value models)</option>
-                        <option value="budget">💰 Budget (most affordable)</option>
-                        <option value="context">📏 Large Context (biggest windows)</option>
-                      </select>
-                    </div>
+
+                    {/* Suggestion chips */}
                     {suggestions.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-blue-200">
-                        <p className="text-xs text-blue-800 mb-2">Curated selection ({suggestions.length} models):</p>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="mb-4 p-3 rounded-lg border border-amber-800/20" style={{ background: 'rgba(218,165,32,0.04)' }}>
+                        <p className="text-[10px] text-amber-600 mb-2 uppercase tracking-wider font-semibold">
+                          Curated selection ({suggestions.length} models) — click to add
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
                           {suggestions.map(modelId => {
                             const model = availableModels.find(m => m.id === modelId);
                             if (!model) return null;
                             const isSelected = selectedModels.includes(modelId);
+                            const c = getProviderColor(model.provider);
                             return (
-                              <button
-                                key={modelId}
-                                type="button"
-                                onClick={() => toggleModel(modelId)}
-                                className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
-                                  isSelected 
-                                    ? 'bg-blue-600 text-white' 
-                                    : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100'
-                                }`}
-                              >
-                                {isSelected ? '✓ ' : ''}{model.name}
+                              <button key={modelId} type="button" onClick={() => toggleModel(modelId)}
+                                className="px-3 py-1 text-[11px] rounded-full font-medium transition-all"
+                                style={{
+                                  background: isSelected ? c.bg : 'transparent',
+                                  color: isSelected ? '#fff' : c.bg,
+                                  border: `1px solid ${isSelected ? c.bg : c.bg + '55'}`,
+                                  boxShadow: isSelected ? `0 0 12px ${c.glow}` : 'none',
+                                }}>
+                                {isSelected ? '✓ ' : '+ '}{model.name}
                               </button>
                             );
                           })}
                         </div>
                       </div>
                     )}
+
+                    {/* Search */}
+                    {!loadingModels && (
+                      <div className="mb-3 relative">
+                        <svg className="absolute left-3 top-2.5 h-4 w-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" placeholder="Search all models..."
+                          value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                          className="input-dark w-full pl-10 pr-4 py-2 rounded-lg text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {/* Model list */}
+                    {loadingModels ? (
+                      <div className="text-center py-8 text-amber-700">
+                        <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        Loading available models...
+                      </div>
+                    ) : (
+                      <>
+                        <div className="border border-amber-900/20 rounded-xl max-h-48 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                          {Object.entries(groupedModels).map(([provider, models]) => {
+                            const c = getProviderColor(provider);
+                            return (
+                              <div key={provider} className="border-b border-amber-900/15 last:border-b-0">
+                                <div className="px-4 py-2 font-semibold text-[11px] uppercase tracking-wider sticky top-0 flex items-center gap-2"
+                                  style={{ background: 'rgba(20,15,10,0.95)', color: c.bg }}>
+                                  <div className="w-2 h-2 rounded-full" style={{ background: c.bg }}></div>
+                                  {provider} ({models.length})
+                                </div>
+                                <div>
+                                  {models.map(model => {
+                                    const sel = selectedModels.includes(model.id);
+                                    return (
+                                      <label key={model.id}
+                                        className={`flex items-center px-4 py-2.5 cursor-pointer transition-all hover:bg-amber-900/15 ${
+                                          sel ? '' : ''
+                                        }`}
+                                        style={{ background: sel ? c.bg + '10' : 'transparent' }}>
+                                        <div className="relative w-4 h-4 mr-3 flex-shrink-0">
+                                          <input type="checkbox" checked={sel} onChange={() => toggleModel(model.id)}
+                                            className="sr-only" />
+                                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
+                                            sel ? 'border-transparent' : 'border-amber-800/40'
+                                          }`} style={{ background: sel ? c.bg : 'transparent' }}>
+                                            {sel && <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                                          </div>
+                                        </div>
+                                        <span className={`text-sm ${sel ? 'text-amber-100 font-medium' : 'text-amber-400/80'}`}>
+                                          {model.name}
+                                        </span>
+                                        {sel && <span className="ml-auto text-[10px] font-bold uppercase tracking-wider" style={{ color: c.bg }}>Selected</span>}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {Object.keys(groupedModels).length === 0 && (
+                            <div className="text-center py-8 text-amber-700 text-sm">No models found matching "{searchQuery}"</div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-xs text-amber-700">
+                            {selectedModels.length} selected · {availableModels.length} available
+                          </p>
+                          {selectedModels.length > 0 && (
+                            <button type="button" onClick={() => setSelectedModels([])}
+                              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors">
+                              Clear all
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  {loadingModels ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <svg className="animate-spin h-8 w-8 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Loading available models...
-                    </div>
-                  ) : (
-                    <>
-                      {/* Search bar */}
-                      <div className="mb-3">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="Search models..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
+                  {/* STEP 3: API Authentication - VISIBLE & CLEAR */}
+                  <div className={`rounded-xl p-5 border ${
+                    (apiKey || friendCode) 
+                      ? 'border-emerald-700/40' 
+                      : 'border-amber-500/50 ring-1 ring-amber-500/20'
+                  }`} style={{ 
+                    background: (apiKey || friendCode) ? 'rgba(16,185,129,0.06)' : 'rgba(218,165,32,0.06)' 
+                  }}>
+                    <div className="flex items-start gap-3 mb-4">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold flex-shrink-0 mt-0.5"
+                        style={{ 
+                          background: (apiKey || friendCode) 
+                            ? 'linear-gradient(135deg, #10b981, #059669)' 
+                            : 'linear-gradient(135deg, #daa520, #b8860b)', 
+                          color: (apiKey || friendCode) ? '#fff' : '#1a0f06' 
+                        }}>
+                        {(apiKey || friendCode) ? '✓' : '3'}
+                      </span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-amber-200">
+                            {(apiKey || friendCode) ? '✅ Authentication ready' : '🔑 API Key required'}
+                          </h4>
+                          <Tooltip text="LLM Arena uses OpenRouter to call AI models. You need a free API key to run evaluations. No account on our side is needed.">
+                            <span></span>
+                          </Tooltip>
                         </div>
-                      </div>
-                      
-                      <div className="border border-gray-200 rounded-lg max-h-96 overflow-y-auto">
-                        {Object.entries(
-                          availableModels
-                            .filter(model => 
-                              searchQuery === '' || 
-                              model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              model.provider.toLowerCase().includes(searchQuery.toLowerCase())
-                            )
-                            .reduce((acc, model) => {
-                              const provider = model.provider;
-                              if (!acc[provider]) acc[provider] = [];
-                              acc[provider].push(model);
-                              return acc;
-                            }, {})
-                        ).map(([provider, models]) => (
-                          <div key={provider} className="border-b border-gray-200 last:border-b-0">
-                            <div className="bg-gray-50 px-4 py-2 font-semibold text-sm text-gray-700 sticky top-0">
-                              {provider} ({models.length})
-                            </div>
-                            <div className="divide-y divide-gray-100">
-                              {models.map(model => (
-                                <label
-                                  key={model.id}
-                                  className={`flex items-center px-4 py-2.5 cursor-pointer hover:bg-blue-50 transition-colors ${
-                                    selectedModels.includes(model.id) ? 'bg-blue-50' : 'bg-white'
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedModels.includes(model.id)}
-                                    onChange={() => toggleModel(model.id)}
-                                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                  />
-                                  <span className="ml-3 text-sm text-gray-900">{model.name}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                        {Object.keys(availableModels.filter(model => 
-                          searchQuery === '' || 
-                          model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          model.provider.toLowerCase().includes(searchQuery.toLowerCase())
-                        )).length === 0 && (
-                          <div className="text-center py-8 text-gray-500">
-                            No models found matching "{searchQuery}"
-                          </div>
+                        {!(apiKey || friendCode) && (
+                          <p className="text-xs text-amber-500 mt-1 leading-relaxed">
+                            No account needed here — just paste your <strong className="text-amber-300">free OpenRouter API key</strong> to start.
+                            <br/>
+                            <a href="https://openrouter.ai/keys" target="_blank" 
+                              className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-200 underline underline-offset-2 mt-1 font-medium">
+                              → Get your free key at openrouter.ai/keys (takes 30 seconds)
+                            </a>
+                          </p>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-2">
-                        {selectedModels.length} model(s) selected · {availableModels.length} models available
-                      </p>
-                    </>
-                  )}
-                </div>
+                    </div>
 
-                {/* API Authentication Section */}
-                <div className="p-5 bg-amber-50 border-2 border-amber-200 rounded-xl shadow-sm">
-                  <div className="flex items-start gap-2 mb-3">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold">3</span>
-                    <span className="text-lg">🔑</span>
-                    <div className="flex-1">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-amber-400 mb-1.5">OpenRouter API Key</label>
+                        <input
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => { setApiKey(e.target.value); if (e.target.value) setFriendCode(''); }}
+                          placeholder="sk-or-v1-..."
+                          className="input-dark w-full px-3 py-2.5 rounded-lg text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-amber-900/30"></div>
+                        <span className="text-[10px] text-amber-700 font-medium">or use a friend code</span>
+                        <div className="flex-1 h-px bg-amber-900/30"></div>
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={friendCode}
+                          onChange={(e) => { setFriendCode(e.target.value); if (e.target.value) setApiKey(''); }}
+                          placeholder="Enter friend code"
+                          className="input-dark w-full px-3 py-2.5 rounded-lg text-sm"
+                        />
+                        <p className="text-[10px] text-amber-800 mt-1">
+                          Got a code from a friend? Use their shared API quota instead.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Supreme Court - inline toggle */}
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-purple-900/30"
+                    style={{ background: 'rgba(88,28,135,0.08)' }}>
+                    <label className="relative inline-flex cursor-pointer">
+                      <input type="checkbox" checked={enableSupremeCourt} onChange={(e) => setEnableSupremeCourt(e.target.checked)} className="sr-only" />
+                      <div className={`w-11 h-6 rounded-full transition-all ${enableSupremeCourt ? 'bg-purple-600' : 'bg-amber-900/40'}`}>
+                        <div className={`w-5 h-5 rounded-full bg-white shadow-lg transform transition-transform ${enableSupremeCourt ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}></div>
+                      </div>
+                    </label>
+                    <div>
                       <div className="flex items-center gap-1">
-                        <h4 className="font-semibold text-gray-900">API Authentication</h4>
-                        <Tooltip text="Required to run evaluations. Use your own key for full control or a friend code for shared access">
+                        <span className="text-sm font-semibold text-purple-300">⚖️ Supreme Court</span>
+                        <Tooltip text="Adds 3 flagship models (GPT-5.2 Pro, Claude Opus 4.5, Gemini 2.5 Pro) as supreme judges with 2× weight">
                           <span></span>
                         </Tooltip>
                       </div>
-                      <p className="text-xs text-gray-600 mb-3">
-                        Use your own OpenRouter API key or enter a friend code
-                      </p>
+                      <p className="text-[10px] text-purple-500 mt-0.5">3 elite judges with 2× weight in ranking</p>
                     </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        OpenRouter API Key (optional)
-                      </label>
-                      <input
-                        type="password"
-                        value={apiKey}
-                        onChange={(e) => {
-                          setApiKey(e.target.value);
-                          if (e.target.value) setFriendCode('');
-                        }}
-                        placeholder="sk-or-v1-..."
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Get your key at <a href="https://openrouter.ai/keys" target="_blank" className="text-blue-600 hover:underline">openrouter.ai/keys</a>
-                      </p>
+
+                  {/* Battle Runs */}
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-amber-800/30"
+                    style={{ background: 'rgba(218,165,32,0.04)' }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🔁</span>
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-amber-300">Repeat Battle</span>
+                          <Tooltip text="Run the same evaluation multiple times to test consistency. Each run produces its own report. Useful for statistical significance.">
+                            <span></span>
+                          </Tooltip>
+                        </div>
+                        <p className="text-[10px] text-amber-600 mt-0.5">
+                          {battleRuns === 1 ? 'Single run' : `${battleRuns} runs — results may vary due to temperature`}
+                        </p>
+                      </div>
                     </div>
-                    
-                    <div className="text-center text-xs text-gray-500 font-medium">OR</div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Friend Code (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={friendCode}
-                        onChange={(e) => {
-                          setFriendCode(e.target.value);
-                          if (e.target.value) setApiKey('');
-                        }}
-                        placeholder="Enter friend code"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Have a friend code? Enter it to use shared API quota
-                      </p>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <button type="button" onClick={() => setBattleRuns(Math.max(1, battleRuns - 1))}
+                        className="w-7 h-7 rounded-lg border border-amber-800/40 text-amber-400 hover:bg-amber-900/30 flex items-center justify-center text-sm font-bold transition-all disabled:opacity-30"
+                        disabled={battleRuns <= 1}>−</button>
+                      <span className="w-8 text-center text-sm font-bold text-amber-200 tabular-nums">{battleRuns}</span>
+                      <button type="button" onClick={() => setBattleRuns(Math.min(10, battleRuns + 1))}
+                        className="w-7 h-7 rounded-lg border border-amber-800/40 text-amber-400 hover:bg-amber-900/30 flex items-center justify-center text-sm font-bold transition-all disabled:opacity-30"
+                        disabled={battleRuns >= 10}>+</button>
                     </div>
                   </div>
-                </div>
 
-                {/* Supreme Court Section */}
-                <div className="p-5 bg-purple-50 border-2 border-purple-300 rounded-xl shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold">4</span>
-                    <label className="flex items-center space-x-2 cursor-pointer flex-1">
-                      <input
-                        type="checkbox"
-                        checked={enableSupremeCourt}
-                        onChange={(e) => setEnableSupremeCourt(e.target.checked)}
-                        className="w-5 h-5 text-blue-600 rounded"
-                      />
-                      <span className="text-sm font-semibold text-gray-900 flex items-center gap-1">
-                        ⚖️ Enable Supreme Court (3 elite judges)
-                        <Tooltip text="Adds 3 flagship models (GPT-5.2 Pro, Claude Opus 4.5, Gemini 2.5 Pro) as supreme judges with 2× weight. They judge but aren't judged">
-                          <span></span>
-                        </Tooltip>
-                      </span>
-                    </label>
-                  </div>
-                  <p className="text-xs text-purple-700 mt-2 ml-8">
-                    Adds GPT-5.2 Pro, Claude Opus 4.5, and Gemini 2.5 Pro as supreme judges with 2× weight in the final ranking. They appear in the matrix but aren't judged themselves.
-                  </p>
-                </div>
-
-                {/* Advanced Settings - Temperature & Max Tokens only */}
-                <details className="border border-gray-200 rounded-lg p-4">
-                  <summary className="font-semibold text-gray-700 cursor-pointer">
-                    ⚙️ Advanced settings
-                  </summary>
-                  <div className="mt-4 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        Temperature: {temperature}
-                        <Tooltip text="Controls randomness. Lower (0-0.3) = consistent, factual. Higher (0.7-1.0) = creative, varied">
-                          <span></span>
-                        </Tooltip>
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={temperature}
-                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Lower = more deterministic, higher = more creative
-                      </p>
+                  {/* Error */}
+                  {error && (
+                    <div className="rounded-xl p-4 border border-red-800/40 flex items-start gap-3" style={{ background: 'rgba(220,38,38,0.08)' }}>
+                      <span className="text-xl">⚠️</span>
+                      <div className="flex-1">
+                        <p className="font-medium text-red-400 text-sm mb-0.5">Evaluation failed</p>
+                        <p className="text-xs text-red-400/70">{error}</p>
+                      </div>
+                      <button onClick={() => setError(null)} className="text-red-600 hover:text-red-400 text-lg">×</button>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        Maximum tokens: {maxTokens}
-                        <Tooltip text="Maximum length of each model's response. One token ≈ 4 characters. Higher = longer answers, more cost">
-                          <span></span>
-                        </Tooltip>
-                      </label>
-                      <input
-                        type="range"
-                        min="100"
-                        max="5000"
-                        step="100"
-                        value={maxTokens}
-                        onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Maximum response length
-                      </p>
-                    </div>
-                  </div>
-                </details>
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3">
-                    <span className="text-xl">⚠️</span>
-                    <div className="flex-1">
-                      <p className="font-medium mb-1">Evaluation failed</p>
-                      <p className="text-sm">{error}</p>
-                    </div>
-                    <button
-                      onClick={() => setError(null)}
-                      className="text-red-400 hover:text-red-600 transition-colors"
-                      aria-label="Close error"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-
-                {/* FAQ Section */}
-                <details className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <summary className="font-semibold text-gray-700 cursor-pointer flex items-center gap-2">
-                    <span>❓ Frequently Asked Questions</span>
-                  </summary>
-                  <div className="mt-4 space-y-4 text-sm">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">What is the Supreme Court?</h4>
-                      <p className="text-gray-600">
-                        Three flagship models (GPT-5.2 Pro, Claude Opus 4.5, Gemini 2.5 Pro) act as "supreme judges" with 2× voting weight. 
-                        They evaluate all responses but aren't evaluated themselves, providing expert judgment on quality.
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">How do I interpret the ranking matrix?</h4>
-                      <p className="text-gray-600">
-                        Each row shows one judge's ranking of all models. Numbers represent ranks (1 = best, higher = worse). 
-                        Colors help visualize: green = top-ranked, red = bottom-ranked. The final score uses Borda count: 
-                        models get points based on their average ranking position.
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Can I compare more than 5 models?</h4>
-                      <p className="text-gray-600">
-                        Yes! You can select as many models as you want. However, evaluation time and cost increase linearly. 
-                        With 10 models and Supreme Court enabled, you'll have 13 judges evaluating 10 responses (130 judgments total).
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Are the results objective?</h4>
-                      <p className="text-gray-600">
-                        Results are as objective as possible: responses are anonymized before judging, and each model is evaluated 
-                        by multiple judges (including itself). However, judges may have biases toward certain response styles. 
-                        The aggregate scoring helps minimize individual bias.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">How much does an evaluation cost?</h4>
-                      <p className="text-gray-600">
-                        Cost varies based on models selected and response length. A typical evaluation with 3-5 models costs $0.01-0.05. 
-                        The detailed report shows exact costs per model. Supreme Court adds ~$0.10-0.15 due to expensive flagship models.
-                      </p>
-                    </div>
-                  </div>
-                </details>
-
-                <button
-                  type="submit"
-                  disabled={loading || selectedModels.length < 2}
-                  className="w-full bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 text-white font-bold py-4 px-6 rounded-xl hover:from-red-700 hover:via-orange-700 hover:to-yellow-700 hover:shadow-2xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 shadow-lg"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Evaluation in progress... (~{Math.ceil(selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0))}s estimated)
-                    </span>
-                  ) : selectedModels.length >= 2 ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span>🚀 Start evaluation</span>
-                      <span className="text-xs bg-white/20 px-2 py-1 rounded">~{Math.ceil(selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0))}s</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <span>Select at least 2 models to continue</span>
-                    </span>
                   )}
-                </button>
 
-                {/* Ready status badge */}
-                {selectedModels.length >= 2 && !loading && (
-                  <div className="text-center">
-                    <span className="inline-flex items-center gap-2 text-sm text-emerald-800 bg-emerald-100 px-5 py-2.5 rounded-full border-2 border-emerald-300 shadow-md">
-                      <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                      <span className="font-semibold">✓ Ready to evaluate {selectedModels.length} models</span>
-                      {enableSupremeCourt && <span className="text-emerald-700">+ 3 supreme judges</span>}
-                    </span>
-                  </div>
-                )}
-              </form>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Success message */}
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-md">
-                <div className="flex items-start gap-3">
-                  <span className="text-3xl">👑</span>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-orange-900 mb-1 text-lg">
-                      The Champion Has Been Crowned!
-                    </h3>
-                    <p className="text-sm text-orange-700">
+                  {/* Submit */}
+                  <button type="submit" disabled={loading || selectedModels.length < 2}
+                    className="submit-btn w-full py-4 rounded-xl font-cinzel font-bold text-base tracking-wider text-amber-950">
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2 relative z-10">
+                        <div className="w-5 h-5 border-2 border-amber-900 border-t-transparent rounded-full animate-spin"></div>
+                        {battleRuns > 1
+                          ? `Run ${currentRun}/${battleRuns} in progress... (~${Math.ceil(selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0))}s each)`
+                          : `Evaluation in progress... (~${Math.ceil(selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0))}s)`
+                        }
+                      </span>
+                    ) : selectedModels.length >= 2 ? (
+                      <span className="flex items-center justify-center gap-2 relative z-10">
+                        ⚔️ Start Battle — {selectedModels.length} gladiators
+                        {battleRuns > 1 && (
+                          <span className="text-xs bg-amber-900/40 px-2 py-0.5 rounded text-amber-200">
+                            ×{battleRuns} runs
+                          </span>
+                        )}
+                        <span className="text-xs bg-amber-900/30 px-2 py-0.5 rounded text-amber-200">
+                          ~{Math.ceil((selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0)) * battleRuns)}s
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="relative z-10">Select at least 2 models to continue</span>
+                    )}
+                  </button>
+
+                  {/* Ready badge */}
+                  {selectedModels.length >= 2 && !loading && (
+                    <div className="text-center">
+                      <span className="inline-flex items-center gap-2 text-xs px-4 py-2 rounded-full border"
+                        style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.3)', color: '#34d399' }}>
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span className="font-semibold">✓ Ready — {selectedModels.length} models{battleRuns > 1 ? ` × ${battleRuns} runs` : ''}</span>
+                        {enableSupremeCourt && <span className="text-emerald-600">+ 3 supreme judges</span>}
+                      </span>
+                    </div>
+                  )}
+                </form>
+              </div>
+            ) : (
+              /* ========== RESULTS ========== */
+              <div className="space-y-4">
+                {/* Podium */}
+                {showPodium && (
+                  <div className="rounded-2xl p-6 border border-amber-800/30 relative overflow-hidden"
+                    style={{ background: 'radial-gradient(ellipse at center top, rgba(218,165,32,0.08) 0%, rgba(12,9,6,0.95) 60%)' }}>
+                    <div className="text-center font-cinzel text-amber-400 font-bold text-xs uppercase tracking-[0.3em] mb-2">
+                      👑 The Champion Has Been Crowned
+                    </div>
+                    <p className="text-center text-[11px] text-amber-700 mb-4">
                       {selectedModels.length} gladiators battled, judged by {selectedModels.length + (enableSupremeCourt ? 3 : 0)} experts
                       {enableSupremeCourt && <span className="font-medium"> (including 3 elite judges with 2× power)</span>}
                     </p>
+                    <PodiumReveal />
+                    <p className="text-center text-[10px] text-amber-800 mt-2">
+                      ↑ Ranking is illustrative — see full report below for actual scores
+                    </p>
                   </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-3 flex-wrap">
+                  <button onClick={() => { setResult(null); setActiveReportId(null); setPrompt(''); setShowPodium(false); setResultData(null); setHeroVisible(true); }}
+                    className="flex-1 min-w-[150px] py-3 px-5 rounded-xl font-semibold text-sm transition-all border border-amber-800/40 text-amber-400 hover:bg-amber-900/30">
+                    ⚔️ New Battle
+                  </button>
+                  <button onClick={handleReplay} disabled={loading || !activeReportId}
+                    className="flex-1 min-w-[150px] py-3 px-5 rounded-xl font-semibold text-sm transition-all border border-amber-600/40 text-amber-300 hover:bg-amber-800/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    🔄 {loading ? 'Replaying...' : 'Replay'}
+                  </button>
+                  <button onClick={() => {
+                    const ar = reports.find(r => r.id === activeReportId);
+                    if (ar) { const blob = new Blob([ar.html], { type: 'text/html' }); const url = URL.createObjectURL(blob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+                  }}
+                    className="flex-1 min-w-[150px] py-3 px-5 rounded-xl font-semibold text-sm transition-all border border-amber-800/40 text-amber-400 hover:bg-amber-900/30 flex items-center justify-center gap-2">
+                    🖨️ Print
+                  </button>
                 </div>
-              </div>
 
-              {/* Action buttons */}
-              <div className="flex gap-3 flex-wrap">
-                <button
-                  onClick={() => {
-                    setResult(null);
-                    setPrompt('');
-                  }}
-                  className="flex-1 min-w-[200px] bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all shadow-md"
-                >
-                  ⚔️ New Battle
-                </button>
-                
-                <button
-                  onClick={() => {
-                    const blob = new Blob([result], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    const printWindow = window.open(url, '_blank');
-                    // Clean up after opening
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                  }}
-                  className="flex-1 min-w-[200px] bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-red-700 hover:via-orange-700 hover:to-yellow-700 hover:shadow-xl transition-all shadow-md flex items-center justify-center gap-2"
-                >
-                  <span>🖨️</span>
-                  <span>Print</span>
-                </button>
-              </div>
-              
-              <div 
-                className="bg-white rounded-xl shadow-lg overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: result }}
-              />
-            </div>
-          )}
+                {/* Reports navigation */}
+                {reports.length > 1 && (
+                  <div className="rounded-xl p-4 border border-amber-900/20" style={{ background: 'rgba(20,15,10,0.8)' }}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm">📊</span>
+                      <h3 className="font-semibold text-amber-300 text-sm">History ({reports.length})</h3>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {reports.map((report, idx) => (
+                        <button key={report.id} onClick={() => { setActiveReportId(report.id); setResult(report.html); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            activeReportId === report.id
+                              ? report.isAggregate ? 'text-white border-slate-500' : 'text-amber-100 border-amber-600'
+                              : report.isAggregate ? 'text-slate-300 border-slate-600/50 hover:text-white' : 'text-amber-600 border-amber-800/30 hover:text-amber-400'
+                          }`}
+                          style={{
+                            background: activeReportId === report.id
+                              ? report.isAggregate ? 'rgba(51,65,85,0.5)' : 'rgba(218,165,32,0.15)'
+                              : report.isAggregate ? 'rgba(51,65,85,0.15)' : 'transparent',
+                            border: '1px solid',
+                            fontWeight: report.isAggregate ? 700 : 500
+                          }}>
+                          {report.runLabel || `Report ${idx + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          {/* Footer with contact */}
-          <footer className="mt-16 pb-8 text-center">
-            <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
-                <span className="text-xl">📬</span>
-                Questions or Feedback?
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                LLM Arena is in active development. Your input helps us improve!
-              </p>
-              <a
-                href="mailto:antho_007@hotmail.fr?subject=LLM Arena Feedback"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 text-white font-semibold rounded-xl hover:from-red-700 hover:via-orange-700 hover:to-yellow-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <span>✉️</span>
-                <span>Contact: antho_007@hotmail.fr</span>
-              </a>
-              <div className="mt-4 text-xs text-gray-500">
-                Built with ⚔️ for the AI community
+                {/* Report display */}
+                {activeReportId && reports.find(r => r.id === activeReportId) && (
+                  <div className="report-wrapper"
+                    dangerouslySetInnerHTML={{ __html: reports.find(r => r.id === activeReportId).html }}
+                  />
+                )}
               </div>
-            </div>
-          </footer>
+            )}
+
+            {/* Footer */}
+            <footer className="mt-16 pb-8 text-center">
+              <div className="max-w-lg mx-auto p-6 rounded-2xl border border-amber-900/20"
+                style={{ background: 'rgba(20,15,10,0.6)' }}>
+                <h3 className="text-sm font-bold text-amber-300 mb-2 flex items-center justify-center gap-2 font-cinzel">
+                  📬 Questions or Feedback?
+                </h3>
+                <p className="text-[11px] text-amber-700 mb-4">
+                  LLM Arena is in active development. Your input helps us improve!
+                </p>
+                <a href="mailto:anthony.boisbouvier@hotmail.fr?subject=LLM Arena Feedback"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-amber-950 transition-all hover:scale-105"
+                  style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)', boxShadow: '0 4px 20px rgba(218,165,32,0.3)' }}>
+                  ✉️ anthony.boisbouvier@hotmail.fr
+                </a>
+                <div className="mt-4 text-[10px] text-amber-800/50">Built with ⚔️ for the AI community</div>
+              </div>
+            </footer>
+          </div>
         </div>
       );
     }
@@ -1382,392 +2194,221 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
-  
+
+  <!-- Settings Drawer -->
+  <div id="settingsDrawer" class="settings-drawer"></div>
+
   <script>
-    // Battle Arena Combat System
+    // ========== GATE ANIMATION ==========
+    (function() {
+      const gate = document.getElementById('gateOverlay');
+      setTimeout(() => gate.classList.add('opening'), 800);
+      setTimeout(() => { gate.classList.add('done'); window.scrollTo(0, 0); }, 2200);
+    })();
+
+    // ========== SAND PARTICLES ==========
+    (function() {
+      const canvas = document.getElementById('sandCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      const resize = () => { canvas.width = window.innerWidth * 2; canvas.height = window.innerHeight * 2; ctx.scale(2, 2); };
+      resize();
+      for (let i = 0; i < 80; i++) {
+        particles.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: Math.random() * 2.5 + 0.5,
+          speedX: (Math.random() - 0.5) * 0.4,
+          speedY: Math.random() * -0.25 - 0.05,
+          opacity: Math.random() * 0.35 + 0.05,
+        });
+      }
+      function animate() {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        particles.forEach(p => {
+          p.x += p.speedX; p.y += p.speedY;
+          if (p.y < -10) { p.y = window.innerHeight + 10; p.x = Math.random() * window.innerWidth; }
+          if (p.x < -10) p.x = window.innerWidth + 10;
+          if (p.x > window.innerWidth + 10) p.x = -10;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(194, 154, 88, ${p.opacity})`; ctx.fill();
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      window.addEventListener('resize', resize);
+    })();
+
+    // ========== BATTLE ARENA COMBAT SYSTEM ==========
     window.BattleArena = {
-      overlay: null,
-      arena: null,
-      gladiators: [],
-      messageInterval: null,
-      combatInterval: null,
-      
+      overlay: null, gladiators: [], messageInterval: null, combatInterval: null, progressInterval: null,
       init() {
         this.overlay = document.getElementById('battleOverlay');
-        this.arena = document.querySelector('.battle-arena');
         this.gladiators = [
-          { 
-            element: document.querySelector('.battle-gladiator.left'),
-            name: 'GPT',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.battle-gladiator.center'),
-            name: 'Gemini',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.battle-gladiator.right'),
-            name: 'Claude',
-            hp: 100
-          }
+          { element: document.querySelector('.bg-left'), hpBar: document.getElementById('battleHp1'), name: 'GPT', hp: 100 },
+          { element: document.querySelector('.bg-center'), hpBar: document.getElementById('battleHp2'), name: 'Gemini', hp: 100 },
+          { element: document.querySelector('.bg-right'), hpBar: document.getElementById('battleHp3'), name: 'Claude', hp: 100 }
         ];
       },
-      
       show() {
         if (!this.overlay) this.init();
-        
-        // Reset HP
-        this.gladiators.forEach(g => g.hp = 100);
-        
+        this.gladiators.forEach(g => {
+          g.hp = 100;
+          if (g.hpBar) { g.hpBar.style.width = '100%'; g.hpBar.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)'; }
+        });
+        const pg = document.getElementById('battleProgress');
+        if (pg) pg.style.width = '10%';
         this.overlay.classList.add('active');
-        this.startCombat();
-        this.startMessages();
+        this.startCombat(); this.startMessages(); this.startProgress();
       },
-      
       hide() {
-        if (this.overlay) {
-          this.overlay.classList.remove('active');
-        }
-        if (this.messageInterval) {
-          clearInterval(this.messageInterval);
-        }
-        if (this.combatInterval) {
-          clearInterval(this.combatInterval);
-        }
+        if (this.overlay) this.overlay.classList.remove('active');
+        clearInterval(this.messageInterval); clearInterval(this.combatInterval); clearInterval(this.progressInterval);
+        const rc = document.getElementById('battleRunCounter');
+        if (rc) { rc.style.display = 'none'; rc.textContent = ''; }
       },
-      
-      startMessages() {
-        const battleMessage = document.getElementById('battleMsg');
-        const messages = [
-          '⚔️ Models entering the arena...',
-          '🎯 Evaluating responses...',
-          '⚖️ Judges deliberating...',
-          '🏆 Calculating rankings...'
-        ];
-        let idx = 0;
-        
-        if (battleMessage) {
-          this.messageInterval = setInterval(() => {
-            idx = (idx + 1) % messages.length;
-            battleMessage.textContent = messages[idx];
-          }, 2500);
-        }
-      },
-      
-      startCombat() {
-        let attackCount = 0;
-        const maxAttacks = 15;
-        
-        this.combatInterval = setInterval(() => {
-          if (attackCount >= maxAttacks) {
-            clearInterval(this.combatInterval);
-            return;
+      setRunInfo(current, total) {
+        const rc = document.getElementById('battleRunCounter');
+        if (rc) {
+          if (total > 1) {
+            rc.style.display = 'block';
+            rc.textContent = `Round ${current} of ${total}`;
+          } else {
+            rc.style.display = 'none';
           }
-          
+        }
+      },
+      startMessages() {
+        const el = document.getElementById('battleMsg');
+        const msgs = ['⚔️ Models entering the arena...','🎯 Evaluating responses...','⚖️ Judges deliberating...','🏆 Calculating rankings...','💥 Fierce competition...','🔥 The heat of battle...'];
+        let i = 0;
+        if (el) this.messageInterval = setInterval(() => { i = (i + 1) % msgs.length; el.textContent = msgs[i]; }, 2200);
+      },
+      startProgress() {
+        const pg = document.getElementById('battleProgress');
+        let w = 10;
+        if (pg) this.progressInterval = setInterval(() => {
+          w = Math.min(w + Math.random() * 3 + 0.5, 90);
+          pg.style.width = w + '%';
+        }, 800);
+      },
+      startCombat() {
+        let count = 0;
+        this.combatInterval = setInterval(() => {
+          if (count >= 30) { clearInterval(this.combatInterval); return; }
           const alive = this.gladiators.filter(g => g.hp > 0);
           if (alive.length < 2) {
-            clearInterval(this.combatInterval);
-            return;
-          }
-          
-          const attacker = alive[Math.floor(Math.random() * alive.length)];
-          const targets = alive.filter(g => g !== attacker);
-          const target = targets[Math.floor(Math.random() * targets.length)];
-          
-          this.attack(attacker, target);
-          attackCount++;
-        }, 1200);
-      },
-      
-      attack(attacker, target) {
-        this.createBeam(attacker.element, target.element);
-        
-        setTimeout(() => {
-          const damage = 15 + Math.random() * 25;
-          target.hp = Math.max(0, target.hp - damage);
-          
-          const targetRect = target.element.getBoundingClientRect();
-          this.createExplosion(
-            targetRect.left + targetRect.width / 2,
-            targetRect.top + targetRect.height / 2
-          );
-        }, 250);
-      },
-      
-      createBeam(attackerEl, targetEl) {
-        const beam = document.createElement('div');
-        beam.style.cssText = `
-          position: fixed;
-          height: 6px;
-          background: linear-gradient(90deg, 
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 215, 0, 1) 50%,
-            rgba(255, 165, 0, 0) 100%
-          );
-          border-radius: 3px;
-          box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
-          opacity: 0;
-          z-index: 10000;
-          pointer-events: none;
-        `;
-        
-        const aRect = attackerEl.getBoundingClientRect();
-        const tRect = targetEl.getBoundingClientRect();
-        
-        const aX = aRect.left + aRect.width / 2;
-        const aY = aRect.top + aRect.height / 2;
-        const tX = tRect.left + tRect.width / 2;
-        const tY = tRect.top + tRect.height / 2;
-        
-        const deltaX = tX - aX;
-        const deltaY = tY - aY;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-        
-        beam.style.left = aX + 'px';
-        beam.style.top = aY + 'px';
-        beam.style.width = '0px';
-        beam.style.transform = `translateY(-50%) rotate(${angle}deg)`;
-        beam.style.transformOrigin = 'left center';
-        
-        document.body.appendChild(beam);
-        
-        setTimeout(() => {
-          beam.style.transition = 'width 0.3s ease-out, opacity 0.3s';
-          beam.style.opacity = '1';
-          beam.style.width = distance + 'px';
-        }, 10);
-        
-        setTimeout(() => beam.style.opacity = '0', 300);
-        setTimeout(() => beam.remove(), 500);
-      },
-      
-      createExplosion(x, y) {
-        const explosion = document.createElement('div');
-        explosion.style.cssText = `
-          position: fixed;
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          background: radial-gradient(circle, 
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 165, 0, 0.8) 30%,
-            rgba(255, 0, 0, 0) 70%
-          );
-          left: ${x - 40}px;
-          top: ${y - 40}px;
-          opacity: 0;
-          transform: scale(0);
-          pointer-events: none;
-          z-index: 10000;
-        `;
-        
-        document.body.appendChild(explosion);
-        
-        setTimeout(() => {
-          explosion.style.transition = 'all 0.4s ease-out';
-          explosion.style.opacity = '1';
-          explosion.style.transform = 'scale(1.5)';
-        }, 10);
-        
-        setTimeout(() => explosion.style.opacity = '0', 250);
-        setTimeout(() => explosion.remove(), 450);
-      }
-    };
-  </script>
-  
-  <script>
-    // Mini Arena - 5 LLMs Battle Royale with HP
-    window.MiniArena = {
-      gladiators: [],
-      combatInterval: null,
-      
-      init() {
-        this.gladiators = [
-          { 
-            element: document.querySelector('.mini-gladiator.mini-pos-1'),
-            healthBar: document.getElementById('miniHealth1'),
-            name: 'GPT',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.mini-gladiator.mini-pos-2'),
-            healthBar: document.getElementById('miniHealth2'),
-            name: 'Gemini',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.mini-gladiator.mini-pos-3'),
-            healthBar: document.getElementById('miniHealth3'),
-            name: 'Claude',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.mini-gladiator.mini-pos-4'),
-            healthBar: document.getElementById('miniHealth4'),
-            name: 'Mistral',
-            hp: 100
-          },
-          { 
-            element: document.querySelector('.mini-gladiator.mini-pos-5'),
-            healthBar: document.getElementById('miniHealth5'),
-            name: 'Llama',
-            hp: 100
-          }
-        ];
-        
-        if (this.gladiators[0].element) {
-          this.startCombat();
-        }
-      },
-      
-      startCombat() {
-        let attackCount = 0;
-        
-        this.combatInterval = setInterval(() => {
-          const alive = this.gladiators.filter(g => g.hp > 0);
-          
-          // Reset if only one or zero alive
-          if (alive.length <= 1) {
             this.gladiators.forEach(g => {
               g.hp = 100;
-              if (g.healthBar) g.healthBar.style.width = '100%';
+              if (g.hpBar) { g.hpBar.style.width = '100%'; g.hpBar.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)'; }
             });
-            attackCount = 0;
             return;
           }
-          
-          // Random attack
-          const attacker = alive[Math.floor(Math.random() * alive.length)];
-          const targets = alive.filter(g => g !== attacker);
-          const target = targets[Math.floor(Math.random() * targets.length)];
-          
-          this.attack(attacker, target);
-          attackCount++;
-        }, 1400);
+          const atk = alive[Math.floor(Math.random() * alive.length)];
+          const tgts = alive.filter(g => g !== atk);
+          const tgt = tgts[Math.floor(Math.random() * tgts.length)];
+          this.attack(atk, tgt); count++;
+        }, 1100);
       },
-      
-      attack(attacker, target) {
-        this.shootBeam(attacker.element, target.element);
-        
+      attack(atk, tgt) {
+        this.createBeam(atk.element, tgt.element);
         setTimeout(() => {
-          // Apply damage
-          const damage = 12 + Math.random() * 20;
-          target.hp = Math.max(0, target.hp - damage);
-          
-          // Update health bar
-          if (target.healthBar) {
-            target.healthBar.style.width = target.hp + '%';
-            
-            // Color based on HP
-            if (target.hp > 60) {
-              target.healthBar.style.background = 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)';
-            } else if (target.hp > 30) {
-              target.healthBar.style.background = 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)';
-            } else {
-              target.healthBar.style.background = 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)';
-            }
+          const dmg = 12 + Math.random() * 22;
+          tgt.hp = Math.max(0, tgt.hp - dmg);
+          if (tgt.hpBar) {
+            tgt.hpBar.style.width = tgt.hp + '%';
+            tgt.hpBar.style.background = tgt.hp > 60 ? 'linear-gradient(90deg, #22c55e, #16a34a)' : tgt.hp > 30 ? 'linear-gradient(90deg, #eab308, #ca8a04)' : 'linear-gradient(90deg, #ef4444, #dc2626)';
           }
-          
-          // Explosion
-          const targetRect = target.element.getBoundingClientRect();
-          this.createExplosion(
-            targetRect.left + targetRect.width / 2,
-            targetRect.top + targetRect.height / 2
-          );
+          const r = tgt.element.getBoundingClientRect();
+          this.createExplosion(r.left + r.width/2, r.top + r.height/2);
         }, 280);
       },
-      
-      shootBeam(fromEl, toEl) {
+      createBeam(from, to) {
         const beam = document.createElement('div');
-        beam.style.cssText = `
-          position: fixed;
-          height: 6px;
-          background: linear-gradient(90deg, 
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 215, 0, 1) 40%,
-            rgba(255, 140, 0, 0.8) 80%,
-            rgba(255, 69, 0, 0) 100%
-          );
-          border-radius: 3px;
-          box-shadow: 
-            0 0 15px rgba(255, 215, 0, 1),
-            0 0 30px rgba(255, 165, 0, 0.6),
-            0 0 5px rgba(255, 255, 255, 0.8);
-          opacity: 0;
-          z-index: 10000;
-          pointer-events: none;
-        `;
-        
-        const fromRect = fromEl.getBoundingClientRect();
-        const toRect = toEl.getBoundingClientRect();
-        
-        const fromX = fromRect.left + fromRect.width / 2;
-        const fromY = fromRect.top + fromRect.height / 2;
-        const toX = toRect.left + toRect.width / 2;
-        const toY = toRect.top + toRect.height / 2;
-        
-        const deltaX = toX - fromX;
-        const deltaY = toY - fromY;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-        
-        beam.style.left = fromX + 'px';
-        beam.style.top = fromY + 'px';
-        beam.style.width = '0px';
-        beam.style.transform = `translateY(-50%) rotate(${angle}deg)`;
-        beam.style.transformOrigin = 'left center';
-        
+        beam.className = 'beam-line';
+        const fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect();
+        const fx = fr.left+fr.width/2, fy = fr.top+fr.height/2, tx = tr.left+tr.width/2, ty = tr.top+tr.height/2;
+        const dx = tx-fx, dy = ty-fy, dist = Math.sqrt(dx*dx+dy*dy), angle = Math.atan2(dy,dx)*180/Math.PI;
+        Object.assign(beam.style, { left: fx+'px', top: fy+'px', width: '0px', transform: `translateY(-50%) rotate(${angle}deg)`, transformOrigin: 'left center', opacity: '0' });
         document.body.appendChild(beam);
-        
-        setTimeout(() => {
-          beam.style.transition = 'width 0.25s ease-out, opacity 0.25s';
-          beam.style.opacity = '1';
-          beam.style.width = distance + 'px';
-        }, 10);
-        
+        setTimeout(() => { beam.style.transition = 'width 0.25s ease-out, opacity 0.25s'; beam.style.opacity = '1'; beam.style.width = dist+'px'; }, 10);
         setTimeout(() => beam.style.opacity = '0', 250);
         setTimeout(() => beam.remove(), 450);
       },
-      
       createExplosion(x, y) {
         const exp = document.createElement('div');
-        exp.style.cssText = `
-          position: fixed;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: radial-gradient(circle, 
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 215, 0, 0.9) 20%,
-            rgba(255, 140, 0, 0.7) 40%,
-            rgba(255, 69, 0, 0.4) 60%,
-            rgba(255, 0, 0, 0) 80%
-          );
-          box-shadow: 
-            0 0 30px rgba(255, 165, 0, 0.8),
-            0 0 50px rgba(255, 140, 0, 0.5);
-          left: ${x - 25}px;
-          top: ${y - 25}px;
-          opacity: 0;
-          transform: scale(0);
-          pointer-events: none;
-          z-index: 10001;
-        `;
-        
+        exp.className = 'explosion-circle';
+        Object.assign(exp.style, { width: '70px', height: '70px', left: (x-35)+'px', top: (y-35)+'px', opacity: '0', transform: 'scale(0)' });
         document.body.appendChild(exp);
-        
+        setTimeout(() => { exp.style.transition = 'all 0.35s ease-out'; exp.style.opacity = '1'; exp.style.transform = 'scale(1.8)'; }, 10);
+        setTimeout(() => exp.style.opacity = '0', 220);
+        setTimeout(() => exp.remove(), 400);
+      }
+    };
+
+    // ========== MINI ARENA (5 LLMs) ==========
+    window.MiniArena = {
+      gladiators: [], combatInterval: null,
+      init() {
+        this.gladiators = [
+          { element: document.querySelector('.mg-1'), healthBar: document.getElementById('miniHealth1'), name: 'GPT', hp: 100 },
+          { element: document.querySelector('.mg-2'), healthBar: document.getElementById('miniHealth2'), name: 'Gemini', hp: 100 },
+          { element: document.querySelector('.mg-3'), healthBar: document.getElementById('miniHealth3'), name: 'Claude', hp: 100 },
+          { element: document.querySelector('.mg-4'), healthBar: document.getElementById('miniHealth4'), name: 'Mistral', hp: 100 },
+          { element: document.querySelector('.mg-5'), healthBar: document.getElementById('miniHealth5'), name: 'Llama', hp: 100 }
+        ];
+        if (this.gladiators[0].element) this.startCombat();
+      },
+      startCombat() {
+        this.combatInterval = setInterval(() => {
+          const alive = this.gladiators.filter(g => g.hp > 0);
+          if (alive.length <= 1) {
+            this.gladiators.forEach(g => { g.hp = 100; if (g.healthBar) g.healthBar.style.width = '100%'; });
+            return;
+          }
+          const atk = alive[Math.floor(Math.random() * alive.length)];
+          const tgts = alive.filter(g => g !== atk);
+          const tgt = tgts[Math.floor(Math.random() * tgts.length)];
+          this.attack(atk, tgt);
+        }, 1400);
+      },
+      attack(atk, tgt) {
+        this.shootBeam(atk.element, tgt.element);
         setTimeout(() => {
-          exp.style.transition = 'all 0.3s ease-out';
-          exp.style.opacity = '1';
-          exp.style.transform = 'scale(1.5)';
-        }, 10);
-        
+          const dmg = 12 + Math.random() * 20;
+          tgt.hp = Math.max(0, tgt.hp - dmg);
+          if (tgt.healthBar) {
+            tgt.healthBar.style.width = tgt.hp + '%';
+            tgt.healthBar.style.background = tgt.hp > 60 ? 'linear-gradient(90deg, #22c55e, #16a34a)' : tgt.hp > 30 ? 'linear-gradient(90deg, #eab308, #ca8a04)' : 'linear-gradient(90deg, #ef4444, #dc2626)';
+          }
+          const r = tgt.element.getBoundingClientRect();
+          this.createExplosion(r.left+r.width/2, r.top+r.height/2);
+        }, 280);
+      },
+      shootBeam(from, to) {
+        const beam = document.createElement('div');
+        beam.className = 'beam-line';
+        const fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect();
+        const fx = fr.left+fr.width/2, fy = fr.top+fr.height/2, tx = tr.left+tr.width/2, ty = tr.top+tr.height/2;
+        const dx = tx-fx, dy = ty-fy, dist = Math.sqrt(dx*dx+dy*dy), angle = Math.atan2(dy,dx)*180/Math.PI;
+        Object.assign(beam.style, { left: fx+'px', top: fy+'px', width: '0px', transform: `translateY(-50%) rotate(${angle}deg)`, transformOrigin: 'left center', opacity: '0' });
+        document.body.appendChild(beam);
+        setTimeout(() => { beam.style.transition = 'width 0.25s ease-out, opacity 0.25s'; beam.style.opacity = '1'; beam.style.width = dist+'px'; }, 10);
+        setTimeout(() => beam.style.opacity = '0', 250);
+        setTimeout(() => beam.remove(), 450);
+      },
+      createExplosion(x, y) {
+        const exp = document.createElement('div');
+        exp.className = 'explosion-circle';
+        Object.assign(exp.style, { width: '50px', height: '50px', left: (x-25)+'px', top: (y-25)+'px', opacity: '0', transform: 'scale(0)' });
+        document.body.appendChild(exp);
+        setTimeout(() => { exp.style.transition = 'all 0.3s ease-out'; exp.style.opacity = '1'; exp.style.transform = 'scale(1.5)'; }, 10);
         setTimeout(() => exp.style.opacity = '0', 200);
         setTimeout(() => exp.remove(), 350);
       }
     };
   </script>
+
+  <!-- Settings sync bridge: lets the settings drawer update the main React app state -->
 </body>
 </html>
