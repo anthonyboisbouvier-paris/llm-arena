@@ -407,6 +407,13 @@
       box-shadow: 0 4px 30px rgba(218,165,32,0.3);
       transition: all 0.3s ease;
     }
+    /* Model selection micro-animations */
+    @keyframes selectPop { 
+      0% { transform: scale(0.95); } 
+      50% { transform: scale(1.02); } 
+      100% { transform: scale(1); } 
+    }
+    .model-selected-anim { animation: selectPop 0.25s ease-out; }
     .submit-btn:hover:not(:disabled) {
       transform: scale(1.03);
       box-shadow: 0 8px 50px rgba(218,165,32,0.5);
@@ -738,6 +745,25 @@
     };
     const getProviderColor = (provider) => PROVIDER_COLORS[provider] || { bg: '#666', glow: 'rgba(102,102,102,0.3)' };
 
+    // Simple markdown to HTML renderer for response text
+    function renderMarkdown(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^#{4}\s+(.+)$/gm, '<h4 style="font-size:13px;font-weight:700;margin:12px 0 4px 0;color:#1c1917;">$1</h4>')
+        .replace(/^#{3}\s+(.+)$/gm, '<h3 style="font-size:14px;font-weight:700;margin:14px 0 6px 0;color:#1c1917;">$1</h3>')
+        .replace(/^#{2}\s+(.+)$/gm, '<h3 style="font-size:15px;font-weight:700;margin:16px 0 6px 0;color:#1c1917;">$1</h3>')
+        .replace(/^#{1}\s+(.+)$/gm, '<h3 style="font-size:16px;font-weight:800;margin:16px 0 8px 0;color:#1c1917;">$1</h3>')
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1c1917;">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code style="background:#f5f5f4;padding:1px 5px;border-radius:4px;font-size:12px;font-family:JetBrains Mono,monospace;">$1</code>')
+        .replace(/^\s*[-*]\s+(.+)$/gm, '<div style="padding-left:16px;position:relative;margin:3px 0;"><span style="position:absolute;left:4px;color:#a8a29e;">•</span>$1</div>')
+        .replace(/^\s*(\d+)\.\s+(.+)$/gm, '<div style="padding-left:20px;position:relative;margin:3px 0;"><span style="position:absolute;left:0;color:#78716c;font-weight:600;font-size:12px;">$1.</span>$2</div>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+
     // Generate HTML report from JSON data (ported from v17_4)
     function generateHTMLFromJSON(data) {
       const getRankColor = (r, min, max) => {
@@ -820,7 +846,8 @@
         const medal = r.rank <= 3 ? `<span class="rank-medal">${medals[r.rank-1]}</span>` : '';
         const respText = r.response_text || '';
         const isLong = respText.length > 500;
-        const responseHtml = `<div class="response-wrap${isLong ? ' scrollable' : ''}">${respText}</div>`;
+        const renderedResp = renderMarkdown(respText);
+        const responseHtml = `<div class="response-wrap${isLong ? ' scrollable' : ''}">${renderedResp}</div>`;
         return `<tr>
           <td style="font-weight:700;">${medal}${r.rank}</td>
           <td class="model">${r.model}</td>
@@ -1003,12 +1030,12 @@
         return `<tr>
           <td style="font-weight:700;">${medal}${i + 1}</td>
           <td class="model">${m}</td>
+          <td class="metric-cell">${avgRank.toFixed(1)}<br><small style="color:#78716c;">${rankSpread}</small></td>
           <td class="metric-cell" style="background-color:${scoreColor};">
             ${Math.round(avgScore)}<br><small style="color:#78716c;">±${sdScore.toFixed(1)}</small>
           </td>
-          <td class="metric-cell">${avgRank.toFixed(1)}<br><small style="color:#78716c;">${rankSpread}</small></td>
           <td class="metric-cell" style="background-color:${timeColor};">${(avgTime/1000).toFixed(1)}s<br><small style="color:#78716c;">±${(sdTime/1000).toFixed(1)}s</small></td>
-          <td class="metric-cell" style="background-color:${costColor};">${avgCost ? '$'+avgCost.toFixed(4) : 'N/A'}</td>
+          <td class="metric-cell" style="background-color:${costColor};">${avgCost ? '$'+avgCost.toFixed(4) : 'N/A'}${avgCost ? `<br><small style="color:#78716c;">±$${stddev(s.costs).toFixed(4)}</small>` : ''}</td>
           <td class="length">${avgLen}</td>
           <td style="text-align:center;">
             <div style="font-size:20px;font-weight:800;color:#4338ca;">${s.wins}</div>
@@ -1077,8 +1104,8 @@
         <tr>
           <th>#</th>
           <th>Model</th>
-          <th>Avg Score</th>
           <th>Avg Rank</th>
+          <th>Avg Score</th>
           <th>Avg Time</th>
           <th>Avg Cost</th>
           <th>Avg Len</th>
@@ -1170,10 +1197,122 @@
       const MAX_REPORTS = 20;
       const [showSettings, setShowSettings] = useState(false);
       const [showPodium, setShowPodium] = useState(false);
+      const [showProcess, setShowProcess] = useState(false);
       const [showConfetti, setShowConfetti] = useState(false);
       const [resultData, setResultData] = useState(null); // Parsed ranking data from response
       const [heroVisible, setHeroVisible] = useState(true);
+
+      // Auth state
+      const AUTH_BASE = 'https://n8n.srv1262078.hstgr.cloud/webhook';
+      const [authToken, setAuthToken] = useState(() => localStorage.getItem('arena_token') || null);
+      const [authEmail, setAuthEmail] = useState(() => localStorage.getItem('arena_email') || null);
+      const [showAuth, setShowAuth] = useState(false);
+      const [showHistory, setShowHistory] = useState(false);
+      const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+      const [authLoading, setAuthLoading] = useState(false);
+      const [authError, setAuthError] = useState('');
+      const [authForm, setAuthForm] = useState({ email: '', password: '' });
+      const [battleHistory, setBattleHistory] = useState([]);
+      const [historyLoading, setHistoryLoading] = useState(false);
+
+      // Auth functions - uses GET + base64 query param to avoid CORS preflight
+      const authFetch = async (endpoint, body) => {
+        const d = btoa(JSON.stringify(body));
+        const res = await fetch(`${AUTH_BASE}/${endpoint}-get?d=${encodeURIComponent(d)}`);
+        return res.json();
+      };
+
+      const handleAuth = async (e) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        setAuthError('');
+        try {
+          const data = await authFetch('arena-auth', {
+            action: authMode,
+            email: authForm.email,
+            password: authForm.password
+          });
+          if (!data.success) throw new Error(data.error || 'Authentication failed');
+          localStorage.setItem('arena_token', data.token);
+          localStorage.setItem('arena_email', data.email);
+          setAuthToken(data.token);
+          setAuthEmail(data.email);
+          if (data.apiKey) { setApiKey(data.apiKey); localStorage.setItem('openrouter_api_key', data.apiKey); }
+          setShowAuth(false);
+          setAuthForm({ email: '', password: '' });
+        } catch (err) {
+          setAuthError(err.message);
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('arena_token');
+        localStorage.removeItem('arena_email');
+        setAuthToken(null);
+        setAuthEmail(null);
+        setBattleHistory([]);
+      };
+
+      const syncApiKey = async (key) => {
+        if (!authToken || !key) return;
+        try { await authFetch('arena-data', { action: 'save-key', token: authToken, apiKey: key }); } catch {}
+      };
+
+      const saveBattle = async (battleData) => {
+        if (!authToken) return;
+        try { await authFetch('arena-data', { action: 'save-battle', token: authToken, ...battleData }); } catch {}
+      };
+
+      const loadHistory = async () => {
+        if (!authToken) return;
+        setHistoryLoading(true);
+        try {
+          const data = await authFetch('arena-data', { action: 'get-history', token: authToken, limit: 30 });
+          if (data.success) setBattleHistory(data.battles || []);
+        } catch {} finally { setHistoryLoading(false); }
+      };
+
+      // Load API key from server on login
+      useEffect(() => {
+        if (!authToken) return;
+        (async () => {
+          try {
+            const data = await authFetch('arena-data', { action: 'get-profile', token: authToken });
+            if (data.success && data.apiKey && !apiKey) {
+              setApiKey(data.apiKey);
+              localStorage.setItem('openrouter_api_key', data.apiKey);
+            }
+          } catch {}
+        })();
+      }, [authToken]);
+
+      // Sync API key to server when changed (debounced)
+      const apiKeySyncRef = useRef(null);
+      useEffect(() => {
+        if (!authToken || !apiKey) return;
+        clearTimeout(apiKeySyncRef.current);
+        apiKeySyncRef.current = setTimeout(() => syncApiKey(apiKey), 2000);
+        return () => clearTimeout(apiKeySyncRef.current);
+      }, [apiKey, authToken]);
+
       const formRef = useRef(null);
+
+      // Keyboard shortcuts
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !loading && selectedModels.length >= 2 && !result) {
+            e.preventDefault();
+            handleSubmit(e);
+          }
+          if (e.key === 'Escape' && showSettings) {
+            setShowSettings(false);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [loading, selectedModels, result, showSettings]);
 
       // Fetch models from OpenRouter
       useEffect(() => {
@@ -1293,29 +1432,6 @@
             </div>
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-amber-300 mb-3 flex items-center gap-2">🔑 API Authentication</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-amber-500 mb-1">OpenRouter API Key</label>
-                    <input type="password" placeholder="sk-or-v1-..." value={apiKey}
-                      onChange={(e) => { setApiKey(e.target.value); if(e.target.value) setFriendCode(''); }}
-                      className="input-dark w-full px-3 py-2 rounded-lg text-sm" />
-                    <p className="text-[10px] text-amber-800 mt-1">
-                      Get yours at <a href="https://openrouter.ai/keys" target="_blank" className="text-amber-600 hover:text-amber-400 underline">openrouter.ai/keys</a>
-                    </p>
-                  </div>
-                  <div className="text-center text-[10px] text-amber-800 font-medium">— OR —</div>
-                  <div>
-                    <label className="block text-xs font-medium text-amber-500 mb-1">Friend Code</label>
-                    <input type="text" placeholder="Enter friend code" value={friendCode}
-                      onChange={(e) => { setFriendCode(e.target.value); if(e.target.value) setApiKey(''); }}
-                      className="input-dark w-full px-3 py-2 rounded-lg text-sm" />
-                    <p className="text-[10px] text-amber-800 mt-1">Use shared API quota with a friend code</p>
-                  </div>
-                </div>
-              </div>
-              <hr className="border-amber-900/20" />
-              <div>
                 <h3 className="text-sm font-semibold text-amber-300 mb-3">🎛️ Advanced Parameters</h3>
                 <div className="space-y-4">
                   <div>
@@ -1341,14 +1457,6 @@
                 </div>
               </div>
             </div>
-            {(apiKey || friendCode) && (
-              <div className="rounded-lg p-3 border border-emerald-800/30" style={{ background: 'rgba(16,185,129,0.08)' }}>
-                <div className="flex items-center gap-2 text-xs text-emerald-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  {apiKey ? 'API Key configured' : 'Friend code configured'}
-                </div>
-              </div>
-            )}
           </div>,
           drawerEl
         );
@@ -1365,7 +1473,7 @@
         e.preventDefault();
         if (!prompt.trim()) { setError('Please enter a prompt'); return; }
         if (selectedModels.length < 2) { setError('Select at least 2 models'); return; }
-        if (!apiKey && !friendCode) { setError('Please enter your OpenRouter API key above (step 3) — it\'s free!'); return; }
+        if (!apiKey && !friendCode) { setError('Please enter your OpenRouter API key above (step 3)'); return; }
 
         const totalRuns = battleRuns;
         setLoading(true); setError(null); setResult(null);
@@ -1412,7 +1520,8 @@
               html,
               jsonData: jsonResponse,
               config,
-              runLabel: totalRuns > 1 ? `Run ${run}/${totalRuns}` : null
+              runLabel: totalRuns > 1 ? `Run ${run}/${totalRuns}` : null,
+              winner: ranking && ranking[0] ? ranking[0].name : null
             };
 
             // Add report progressively
@@ -1421,6 +1530,15 @@
             setResult(html);
             lastHtml = html;
             lastRanking = ranking;
+
+            // Save battle to server
+            saveBattle({
+              prompt: prompt.slice(0, 500),
+              models: selectedModels,
+              winner: ranking && ranking[0] ? ranking[0].name : null,
+              ranking: ranking ? ranking.slice(0, 5) : [],
+              config: { temperature, maxTokens, enableSupremeCourt, run, totalRuns }
+            });
 
             // Brief pause between runs for UX (not on last run)
             if (run < totalRuns) {
@@ -1495,7 +1613,7 @@
           const html = generateHTMLFromJSON(jsonResponse2);
           const ranking2 = extractRankingFromJSON(jsonResponse2);
           if (ranking2) setResultData(ranking2);
-          const newReport = { id: Date.now(), timestamp: new Date(), html, jsonData: jsonResponse2, config: rc };
+          const newReport = { id: Date.now(), timestamp: new Date(), html, jsonData: jsonResponse2, config: rc, winner: ranking2 && ranking2[0] ? ranking2[0].name : null };
           setReports(prev => [...prev, newReport].slice(-MAX_REPORTS));
           setActiveReportId(newReport.id);
           setResult(html);
@@ -1624,6 +1742,136 @@
           <ConfettiEffect />
           <SettingsPortal />
 
+          {/* ========== AUTH TOP BAR ========== */}
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+            {authToken ? (
+              <>
+                <button onClick={() => { setShowHistory(true); loadHistory(); }}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-amber-800/30 text-amber-400 hover:bg-amber-900/20 transition-all"
+                  style={{ background: 'rgba(20,15,10,0.85)', backdropFilter: 'blur(12px)' }}>
+                  📜 History
+                </button>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-800/30"
+                  style={{ background: 'rgba(20,15,10,0.85)', backdropFilter: 'blur(12px)' }}>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[11px] text-amber-300 font-medium">{authEmail}</span>
+                  <button onClick={handleLogout} className="text-[10px] text-amber-700 hover:text-red-400 ml-1 transition-colors" title="Logout">✕</button>
+                </div>
+              </>
+            ) : (
+              <button onClick={() => setShowAuth(true)}
+                className="px-4 py-1.5 rounded-lg text-[11px] font-semibold border border-amber-700/40 text-amber-300 hover:bg-amber-900/30 hover:border-amber-600/60 transition-all"
+                style={{ background: 'rgba(20,15,10,0.85)', backdropFilter: 'blur(12px)' }}>
+                🔑 Sign in
+              </button>
+            )}
+          </div>
+
+          {/* ========== AUTH MODAL ========== */}
+          {showAuth && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setShowAuth(false)}>
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+              <div className="relative w-full max-w-sm rounded-2xl border border-amber-800/40 p-6" 
+                style={{ background: 'linear-gradient(135deg, #1a0f06, #0d0a05)' }}
+                onClick={e => e.stopPropagation()}>
+                <button onClick={() => setShowAuth(false)} className="absolute top-3 right-3 text-amber-700 hover:text-amber-400 text-lg">✕</button>
+                <h2 className="text-xl font-bold text-amber-200 mb-1 font-cinzel text-center">
+                  {authMode === 'login' ? '⚔️ Enter the Arena' : '🛡️ Join the Arena'}
+                </h2>
+                <p className="text-[11px] text-amber-700 text-center mb-5">
+                  {authMode === 'login' ? 'Sign in to sync your API key & battle history' : 'Create an account to save your progress'}
+                </p>
+                {authError && (
+                  <div className="mb-4 p-2.5 rounded-lg border border-red-800/40 bg-red-900/15 text-[11px] text-red-300">{authError}</div>
+                )}
+                <form onSubmit={handleAuth} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Email</label>
+                    <input type="email" required value={authForm.email} 
+                      onChange={e => setAuthForm(p => ({...p, email: e.target.value}))}
+                      className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}
+                      placeholder="gladiator@arena.com" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Password</label>
+                    <input type="password" required minLength={6} value={authForm.password}
+                      onChange={e => setAuthForm(p => ({...p, password: e.target.value}))}
+                      className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}
+                      placeholder="••••••••" />
+                  </div>
+                  <button type="submit" disabled={authLoading}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
+                    {authLoading ? '⏳ Please wait...' : authMode === 'login' ? '⚔️ Sign In' : '🛡️ Create Account'}
+                  </button>
+                </form>
+                <p className="text-center text-[11px] text-amber-700 mt-4">
+                  {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+                  <button onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); }}
+                    className="text-amber-400 hover:text-amber-200 underline underline-offset-2">
+                    {authMode === 'login' ? 'Register' : 'Sign in'}
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ========== HISTORY DRAWER ========== */}
+          {showHistory && (
+            <div className="fixed inset-0 z-[60] flex justify-end" onClick={() => setShowHistory(false)}>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+              <div className="relative w-full max-w-md h-full overflow-y-auto border-l border-amber-800/30"
+                style={{ background: 'linear-gradient(135deg, #1a0f06, #0d0a05)' }}
+                onClick={e => e.stopPropagation()}>
+                <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-amber-800/20"
+                  style={{ background: 'rgba(26,15,6,0.95)', backdropFilter: 'blur(12px)' }}>
+                  <h2 className="text-lg font-bold text-amber-200 font-cinzel">📜 Battle History</h2>
+                  <button onClick={() => setShowHistory(false)} className="text-amber-700 hover:text-amber-400 text-lg">✕</button>
+                </div>
+                <div className="p-4 space-y-3">
+                  {historyLoading ? (
+                    <div className="text-center py-8 text-amber-700 text-sm">Loading battles...</div>
+                  ) : battleHistory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-3">⚔️</div>
+                      <p className="text-amber-700 text-sm">No battles yet</p>
+                      <p className="text-amber-800 text-[11px] mt-1">Your battle results will appear here</p>
+                    </div>
+                  ) : battleHistory.map((b, i) => (
+                    <div key={b.id || i} className="rounded-xl p-3.5 border border-amber-800/20 hover:border-amber-700/30 transition-colors"
+                      style={{ background: 'rgba(218,165,32,0.03)' }}>
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-[10px] text-amber-700">{new Date(b.timestamp).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        {b.winner && (
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded-full">🥇 {b.winner}</span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-amber-300 line-clamp-2 mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {b.prompt || 'No prompt saved'}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {(b.models || []).slice(0, 5).map((m, j) => (
+                          <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/20 text-amber-600 border border-amber-800/15">
+                            {m.split('/')[1] || m}
+                          </span>
+                        ))}
+                      </div>
+                      {b.ranking && b.ranking.length > 1 && (
+                        <div className="mt-2 flex items-center gap-2 text-[10px] text-amber-700">
+                          {b.ranking.slice(0, 3).map((r, ri) => (
+                            <span key={ri}>{['🥇','🥈','🥉'][ri]} {r.name}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ========== HERO SECTION ========== */}
           {heroVisible && !result && (
             <section className="hero-section">
@@ -1675,8 +1923,25 @@
                 </button>
 
                 <p className="mt-5 text-[11px] text-amber-700/40 uppercase tracking-[0.15em] fade-in-up stagger-5">
-                  Free · No account needed · Results in ~30s
+                  OpenRouter API key required · ~2€ for dozens of tests · Results in ~30s
                 </p>
+
+                <div className="flex items-center justify-center gap-6 mt-6 text-amber-700/40 fade-in-up stagger-5">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-amber-500/60">{availableModels.length || '23'}</div>
+                    <div className="text-[9px] uppercase tracking-wider">Models</div>
+                  </div>
+                  <div className="w-px h-8 bg-amber-800/20"></div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-amber-500/60">6</div>
+                    <div className="text-[9px] uppercase tracking-wider">Providers</div>
+                  </div>
+                  <div className="w-px h-8 bg-amber-800/20"></div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-amber-500/60">Blind</div>
+                    <div className="text-[9px] uppercase tracking-wider">Evaluation</div>
+                  </div>
+                </div>
               </div>
 
               <div className="scroll-indicator">
@@ -1860,6 +2125,29 @@
                       </div>
                     ) : (
                       <>
+                        {/* Selected models bar */}
+                        {selectedModels.length > 0 && (
+                          <div className="mb-3 rounded-lg p-2.5 border border-amber-800/25" style={{ background: 'rgba(218,165,32,0.04)' }}>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider">Selected ({selectedModels.length})</span>
+                              <div className="flex-1 h-px bg-amber-900/20"></div>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {selectedModels.map(id => {
+                                const m = availableModels.find(am => am.id === id);
+                                const c = getProviderColor(m?.provider || '');
+                                return (
+                                  <span key={id} onClick={() => toggleModel(id)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-white cursor-pointer transition-all hover:scale-105 hover:brightness-110"
+                                    style={{ background: c.bg, boxShadow: `0 0 10px ${c.glow}` }}>
+                                    {m?.name || id.split('/')[1] || id}
+                                    <span className="text-white/50 hover:text-white/90 text-[10px]">×</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                         <div className="border border-amber-900/20 rounded-xl max-h-48 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.2)' }}>
                           {Object.entries(groupedModels).map(([provider, models]) => {
                             const c = getProviderColor(provider);
@@ -1876,7 +2164,7 @@
                                     return (
                                       <label key={model.id}
                                         className={`flex items-center px-4 py-2.5 cursor-pointer transition-all hover:bg-amber-900/15 ${
-                                          sel ? '' : ''
+                                          sel ? 'model-selected-anim' : ''
                                         }`}
                                         style={{ background: sel ? c.bg + '10' : 'transparent' }}>
                                         <div className="relative w-4 h-4 mr-3 flex-shrink-0">
@@ -1941,19 +2229,27 @@
                           <h4 className="text-sm font-bold text-amber-200">
                             {(apiKey || friendCode) ? '✅ Authentication ready' : '🔑 API Key required'}
                           </h4>
-                          <Tooltip text="LLM Arena uses OpenRouter to call AI models. You need a free API key to run evaluations. No account on our side is needed.">
+                          <Tooltip text="LLM Arena uses OpenRouter to route AI models. You need an API key with a few euros of credit loaded — 2-3€ is enough for dozens of evaluations.">
                             <span></span>
                           </Tooltip>
                         </div>
-                        {!(apiKey || friendCode) && (
+                        {!(apiKey || friendCode) && !authToken && (
                           <p className="text-xs text-amber-500 mt-1 leading-relaxed">
-                            No account needed here — just paste your <strong className="text-amber-300">free OpenRouter API key</strong> to start.
+                            Paste your <strong className="text-amber-300">OpenRouter API key</strong> to start. You'll need a few euros of credit loaded (2-3€ suffice for many tests).
                             <br/>
                             <a href="https://openrouter.ai/keys" target="_blank" 
                               className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-200 underline underline-offset-2 mt-1 font-medium">
-                              → Get your free key at openrouter.ai/keys (takes 30 seconds)
+                              → Get your key at openrouter.ai/keys
                             </a>
                           </p>
+                        )}
+                        {!(apiKey || friendCode) && authToken && (
+                          <p className="text-xs text-amber-500 mt-1 leading-relaxed">
+                            Enter your API key below — it will be <strong className="text-amber-300">saved to your account</strong> automatically.
+                          </p>
+                        )}
+                        {(apiKey || friendCode) && authToken && (
+                          <p className="text-xs text-emerald-500 mt-1">🔒 Saved to your account — auto-loaded on login</p>
                         )}
                       </div>
                     </div>
@@ -1969,23 +2265,27 @@
                           className="input-dark w-full px-3 py-2.5 rounded-lg text-sm"
                         />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 h-px bg-amber-900/30"></div>
-                        <span className="text-[10px] text-amber-700 font-medium">or use a friend code</span>
-                        <div className="flex-1 h-px bg-amber-900/30"></div>
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={friendCode}
-                          onChange={(e) => { setFriendCode(e.target.value); if (e.target.value) setApiKey(''); }}
-                          placeholder="Enter friend code"
-                          className="input-dark w-full px-3 py-2.5 rounded-lg text-sm"
-                        />
-                        <p className="text-[10px] text-amber-800 mt-1">
-                          Got a code from a friend? Use their shared API quota instead.
-                        </p>
-                      </div>
+                      {!authToken && (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 h-px bg-amber-900/30"></div>
+                            <span className="text-[10px] text-amber-700 font-medium">or use a friend code</span>
+                            <div className="flex-1 h-px bg-amber-900/30"></div>
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={friendCode}
+                              onChange={(e) => { setFriendCode(e.target.value); if (e.target.value) setApiKey(''); }}
+                              placeholder="Enter friend code"
+                              className="input-dark w-full px-3 py-2.5 rounded-lg text-sm"
+                            />
+                            <p className="text-[10px] text-amber-800 mt-1">
+                              Got a code from a friend? Use their shared API quota instead.
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -2071,6 +2371,7 @@
                         <span className="text-xs bg-amber-900/30 px-2 py-0.5 rounded text-amber-200">
                           ~{Math.ceil((selectedModels.length * 3 + (enableSupremeCourt ? 10 : 0)) * battleRuns)}s
                         </span>
+                        <kbd className="text-[10px] bg-amber-900/50 px-1.5 py-0.5 rounded text-amber-300/60 font-mono ml-1">⌘↵</kbd>
                       </span>
                     ) : (
                       <span className="relative z-10">Select at least 2 models to continue</span>
@@ -2088,6 +2389,56 @@
                       </span>
                     </div>
                   )}
+
+                  {/* How it works - detailed process */}
+                  <div className="mt-6 rounded-xl border border-amber-800/20 overflow-hidden" style={{ background: 'rgba(218,165,32,0.03)' }}>
+                    <button type="button" onClick={() => setShowProcess(!showProcess)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-amber-900/10 transition-colors">
+                      <span className="text-xs font-semibold text-amber-500 tracking-wide">⚙️ How the evaluation works</span>
+                      <span className="text-amber-700 text-xs">{showProcess ? '▲' : '▼'}</span>
+                    </button>
+                    {showProcess && (
+                      <div className="px-4 pb-4 space-y-3">
+                        <div className="flex gap-3 items-start">
+                          <span className="text-lg mt-0.5">📤</span>
+                          <div>
+                            <p className="text-xs font-semibold text-amber-400">1. Prompt dispatch</p>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">Your prompt is sent simultaneously to all selected models via OpenRouter. Each model generates its response independently, with the same temperature and max tokens settings.</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 items-start">
+                          <span className="text-lg mt-0.5">🎭</span>
+                          <div>
+                            <p className="text-xs font-semibold text-amber-400">2. Blind evaluation by AI judges</p>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">Each model's response is evaluated by N independent AI judges (one per model). The evaluation is <strong className="text-amber-500">blind</strong> — judges don't know which model produced which response. They only see anonymized "Response A", "Response B", etc. Each judge ranks all responses from best to worst based on quality, accuracy, and relevance.</p>
+                          </div>
+                        </div>
+                        {enableSupremeCourt && (
+                          <div className="flex gap-3 items-start">
+                            <span className="text-lg mt-0.5">⚖️</span>
+                            <div>
+                              <p className="text-xs font-semibold text-amber-400">3. Supreme Court review</p>
+                              <p className="text-[11px] text-amber-700 leading-relaxed">3 additional elite judges (GPT-4o, Claude Sonnet, Gemini Pro) perform a second blind evaluation. Their votes carry <strong className="text-amber-500">2× weight</strong> in the final ranking, acting as a tie-breaker and quality anchor.</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex gap-3 items-start">
+                          <span className="text-lg mt-0.5">🏆</span>
+                          <div>
+                            <p className="text-xs font-semibold text-amber-400">{enableSupremeCourt ? '4' : '3'}. Borda Count aggregation</p>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">All judge rankings are aggregated using the <strong className="text-amber-500">Borda Count</strong> method — a ranked voting system where each position earns points (1st place = N points, 2nd = N-1, etc.). The model with the highest total score wins. This method is resistant to outlier votes and produces fair, balanced results.</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 items-start">
+                          <span className="text-lg mt-0.5">📊</span>
+                          <div>
+                            <p className="text-xs font-semibold text-amber-400">{enableSupremeCourt ? '5' : '4'}. Detailed report</p>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">A full report is generated with the ranking matrix (every judge × every model), final scores, response times, costs, and full responses. {battleRuns > 1 ? `With ${battleRuns} runs, you also get a statistical aggregate report showing averages, standard deviations, and consistency across all evaluations.` : ''}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </form>
               </div>
             ) : (
@@ -2153,6 +2504,9 @@
                             fontWeight: report.isAggregate ? 700 : 500
                           }}>
                           {report.runLabel || `Report ${idx + 1}`}
+                          {report.winner && !report.isAggregate && (
+                            <span className="block text-[9px] text-amber-600 font-normal mt-0.5">🥇 {report.winner}</span>
+                          )}
                         </button>
                       ))}
                     </div>
