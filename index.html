@@ -2286,13 +2286,13 @@
               else if (name.match(/cohere|command/i)) provider = 'Cohere';
             }
             const c = getProviderColor(provider);
-            return { rank: i + 1, name: name, color: c.bg, score: r.score };
+            return { rank: i + 1, name: name, color: c.bg, score: r.score, provider: provider };
           });
         } else {
           topModels = selectedModels.slice(0, 3).map((id, i) => {
             const m = availableModels.find(am => am.id === id);
             const c = getProviderColor(m?.provider || '');
-            return { rank: i + 1, name: m?.name || id.split('/')[1] || id, color: c.bg };
+            return { rank: i + 1, name: m?.name || id.split('/')[1] || id, color: c.bg, provider: m?.provider || '' };
           });
         }
         while (topModels.length < 3) topModels.push({ rank: topModels.length + 1, name: '—', color: '#666' });
@@ -2309,15 +2309,28 @@
                 transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.3}s`
               }}>
                 {p.rank === 1 && step >= 2 && <div className="text-4xl mb-2 champion-crown">👑</div>}
-                <div className="rounded-full flex items-center justify-center text-white font-bold shadow-xl mb-2"
-                  style={{
-                    width: p.rank === 1 ? 56 : 48, height: p.rank === 1 ? 56 : 48,
-                    background: `linear-gradient(135deg, ${p.color}, ${p.color}cc)`,
-                    boxShadow: p.rank === 1 ? `0 0 30px ${p.color}66, 0 0 60px ${p.color}33` : `0 4px 20px rgba(0,0,0,0.4)`,
-                    fontSize: p.rank === 1 ? 20 : 16
-                  }}>
-                  #{p.rank}
-                </div>
+                {(() => {
+                  const ch = getProviderChar(p.provider);
+                  const size = p.rank === 1 ? 80 : 64;
+                  return ch.img ? (
+                    <img src={ch.img} alt={ch.name}
+                      className="mb-2 select-none"
+                      style={{
+                        width: size, height: size, objectFit: 'contain',
+                        filter: `drop-shadow(0 0 ${p.rank === 1 ? '20px' : '12px'} ${p.color}88)`,
+                      }} />
+                  ) : (
+                    <div className="rounded-full flex items-center justify-center text-white font-bold shadow-xl mb-2"
+                      style={{
+                        width: p.rank === 1 ? 56 : 48, height: p.rank === 1 ? 56 : 48,
+                        background: `linear-gradient(135deg, ${p.color}, ${p.color}cc)`,
+                        boxShadow: p.rank === 1 ? `0 0 30px ${p.color}66, 0 0 60px ${p.color}33` : `0 4px 20px rgba(0,0,0,0.4)`,
+                        fontSize: p.rank === 1 ? 24 : 18
+                      }}>
+                      {ch.weapon}
+                    </div>
+                  );
+                })()}
                 <div className="text-xs font-bold text-center mb-1 max-w-[100px] truncate" style={{ color: p.color }}>
                   {p.name}
                 </div>
