@@ -1828,6 +1828,18 @@
         }
       }, [result]);
 
+      // Click outside to collapse provider dropdown
+      useEffect(() => {
+        if (!expandedProvider) return;
+        const handler = (e) => {
+          if (!e.target.closest('.provider-models-dropdown') && !e.target.closest('.provider-card')) {
+            setExpandedProvider(null);
+          }
+        };
+        document.addEventListener('click', handler);
+        return () => document.removeEventListener('click', handler);
+      }, [expandedProvider]);
+
       // Listen for backdrop close
       useEffect(() => {
         const handler = () => setShowSettings(false);
