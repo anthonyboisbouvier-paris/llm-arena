@@ -531,12 +531,19 @@
       box-shadow: 0 4px 20px var(--glow-color);
     }
     .preset-btn {
-      transition: all 0.3s ease; position: relative; overflow: hidden;
+      transition: all 0.3s ease; position: relative; overflow: visible;
     }
     .preset-btn.active::after {
       content: ''; position: absolute; bottom: 0; left: 10%; right: 10%; height: 2px;
       background: #daa520; border-radius: 1px;
     }
+    .preset-btn .preset-tip {
+      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+      white-space: nowrap; font-size: 9px; color: rgba(218,165,32,0.7);
+      background: rgba(15,10,5,0.95); padding: 2px 8px; border-radius: 4px;
+      pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 20;
+    }
+    .preset-btn:hover .preset-tip { opacity: 1; }
     /* Submit button glow */
     .submit-btn {
       position: relative; overflow: hidden;
@@ -2714,8 +2721,7 @@
                             const newSelected = [...new Set([...selectedModels, ...available])];
                             setSelectedModels(newSelected);
                           }}
-                          title="Double-click to select recommended"
-                          className={`preset-btn px-3 py-2 rounded-lg text-xs font-medium transition-all relative group ${
+                          className={`preset-btn px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                             suggestionCriteria.priority1 === preset.key
                               ? 'active text-amber-100 border-amber-600/60'
                               : 'text-amber-600 border-amber-800/30 hover:text-amber-400 hover:bg-amber-900/20'
@@ -2725,9 +2731,7 @@
                             border: '1px solid'
                           }}>
                           {preset.label}
-                          <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-amber-500/70 bg-amber-950/90 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                            Double-click to select ★
-                          </span>
+                          <span className="preset-tip">Double-click to select ★</span>
                         </button>
                       ))}
                     </div>
