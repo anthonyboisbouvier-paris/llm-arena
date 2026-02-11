@@ -3,13 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Clash - AI Model Arena with AI Judges & Robust Statistics</title>
-  <meta name="description" content="Agent Clash: pit GPT, Claude, Gemini, Llama, Mistral against each other. Independent AI judges score responses across multiple runs and datasets for statistically robust rankings.">
+  <title>Agent Clash - AI Model Evaluation Arena | Compare LLMs with AI Judges</title>
+  <meta name="description" content="Agent Clash is a free AI model evaluation platform. Compare GPT, Claude, Gemini, Llama, Mistral side by side. Independent AI judges score each response across multiple runs and datasets to produce statistically robust, reproducible rankings.">
+  <meta name="keywords" content="AI model comparison, LLM arena, AI judges, LLM evaluation, GPT vs Claude, model benchmark, AI testing, compare AI models, LLM ranking, AI evaluation tool">
+  <meta name="author" content="Agent Clash">
   <link rel="canonical" href="https://agent-clash.ai/">
-  <meta property="og:title" content="Agent Clash — AI judges rank your models">
-  <meta property="og:description" content="Compare AI models with independent AI judges. Multi-run, multi-dataset evaluations for robust, reproducible rankings. Free and open.">
+  <meta property="og:title" content="Agent Clash — Compare AI Models with Independent AI Judges">
+  <meta property="og:description" content="Free AI evaluation arena. Pit LLMs against each other on your prompts. AI judges score responses across multiple runs for robust, reproducible rankings.">
   <meta property="og:url" content="https://agent-clash.ai/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Agent Clash">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Agent Clash — AI Model Evaluation Arena">
+  <meta name="twitter:description" content="Compare AI models with independent AI judges. Multi-run evaluations, robust statistics, reproducible rankings.">
+
+  <!-- Structured Data: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Agent Clash",
+    "url": "https://agent-clash.ai",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "description": "Agent Clash is a free AI model evaluation platform that compares large language models (LLMs) side by side. Users submit prompts to multiple AI models simultaneously. Independent AI judges then score each response on criteria like accuracy, depth, clarity, and reasoning. The platform supports multiple evaluation runs and parallel datasets to produce statistically robust, reproducible rankings. Supported models include GPT (OpenAI), Claude (Anthropic), Gemini (Google), Llama (Meta), Mistral, and Command (Cohere).",
+    "featureList": [
+      "Side-by-side AI model comparison",
+      "Independent AI judges score each response",
+      "Multiple evaluation runs for statistical robustness",
+      "Parallel dataset testing",
+      "Support for GPT, Claude, Gemini, Llama, Mistral, Command",
+      "Detailed scoring reports with per-criteria breakdowns",
+      "Supreme Court mode with elite judge panel",
+      "Free and open platform"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Anthony Boisbouvier",
+      "email": "anthony.boisbouvier@gmail.com"
+    }
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Agent Clash?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Agent Clash is a free AI model evaluation platform. It lets you compare large language models (LLMs) like GPT, Claude, Gemini, Llama, and Mistral side by side on your own prompts. Independent AI judges score each response, and the platform produces statistically robust rankings across multiple runs and datasets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does Agent Clash evaluate AI models?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You submit a prompt and select which AI models to test. All models receive the same prompt simultaneously. Then, independent AI judges (separate LLM instances acting as evaluators) score each response on criteria like accuracy, reasoning, depth, and clarity. You can run multiple iterations and use parallel datasets for statistically robust results."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What AI models does Agent Clash support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Agent Clash supports over 100 models from major providers: OpenAI (GPT-4o, GPT-5.2), Anthropic (Claude 3.5, Claude Opus 4.5), Google (Gemini 2.5, Gemini 3), Meta (Llama 3.3), Mistral (Mistral Large, Ministral), and Cohere (Command R). New models are added regularly via the OpenRouter API."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is Agent Clash free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Agent Clash platform itself is free. You need an OpenRouter API key to access the AI models. A typical evaluation session costs approximately 2 euros for dozens of model comparisons."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Supreme Court mode?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Supreme Court mode adds 3 elite AI judges (top-tier models) whose scores count double in the final ranking. This provides a more authoritative evaluation by weighting expert-level assessments more heavily."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How are the rankings calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each AI judge scores every model response on multiple criteria. Scores are averaged across all judges and all evaluation runs. When using multiple datasets, results are aggregated to show how models perform across different types of inputs. The final ranking reflects statistically robust, reproducible performance differences."
+        }
+      }
+    ]
+  }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -920,24 +1017,91 @@
   </style>
 </head>
 <body>
-    <!-- SEO H1 (visible to crawlers, invisible to users) -->
-  <h1 class="sr-only">
-    Agent Clash – Compare AI models in head-to-head battles
-  </h1>
-    <section class="sr-only">
-  <h2>What is Agent Clash?</h2>
-  <p>
-    Agent Clash is a web application designed to compare large language models
-    in head-to-head battles. Users can submit a single prompt and see how
-    different AI models respond, reason, and perform side by side.
-  </p>
-  <p>
-    The platform makes it easy to evaluate response quality, clarity, and
-    relevance across models such as GPT, Claude, Gemini, and other modern LLMs.
-    Agent Clash is built for developers, researchers, and AI enthusiasts who
-    want a transparent and interactive way to benchmark AI performance.
-  </p>
-</section>
+    <!-- Semantic content for crawlers and AI engines -->
+  <header class="sr-only">
+    <h1>Agent Clash — AI Model Evaluation Arena with Independent AI Judges</h1>
+    <p>Agent Clash is a free AI model evaluation platform that compares large language models (LLMs) side by side using independent AI judges and statistically robust scoring.</p>
+  </header>
+
+  <main class="sr-only" role="main">
+    <article>
+      <section aria-label="What is Agent Clash">
+        <h2>What is Agent Clash?</h2>
+        <p>
+          Agent Clash is a free, web-based AI model evaluation platform. Users submit a prompt to multiple
+          large language models simultaneously — including GPT (OpenAI), Claude (Anthropic), Gemini (Google),
+          Llama (Meta), Mistral, and Command (Cohere). Independent AI judges then evaluate each response
+          blindly, scoring them on criteria such as accuracy, reasoning, depth, and clarity.
+        </p>
+        <p>
+          The platform supports multiple evaluation runs and parallel datasets to produce statistically robust,
+          reproducible rankings. Agent Clash uses the Borda Count aggregation method — a ranked voting system
+          resistant to outlier bias — to determine fair, balanced results.
+        </p>
+        <p>
+          Agent Clash is designed for developers, researchers, prompt engineers, product teams, and AI enthusiasts
+          who want a transparent and data-driven way to benchmark AI model performance.
+        </p>
+      </section>
+
+      <section aria-label="How Agent Clash works">
+        <h2>How Does Agent Clash Work?</h2>
+        <ol>
+          <li><strong>Prompt dispatch:</strong> Your prompt is sent simultaneously to all selected AI models via the OpenRouter API. Each model generates its response independently with the same settings.</li>
+          <li><strong>Blind evaluation by AI judges:</strong> Independent AI judges evaluate each response without knowing which model produced it. Responses are labeled anonymously (Response A, Response B, etc.) to prevent bias.</li>
+          <li><strong>Supreme Court review (optional):</strong> Three elite judges (GPT-4o, Claude Sonnet, Gemini Pro) perform a second blind evaluation with 2x weighted votes, acting as a quality anchor.</li>
+          <li><strong>Borda Count aggregation:</strong> All judge rankings are aggregated using the Borda Count method. First place earns N points, second place N-1, and so on. The highest-scoring model wins.</li>
+          <li><strong>Reports and analysis:</strong> Full scoring matrices, response times, costs, per-criteria breakdowns, win rates, standard deviations, and consistency metrics across runs and datasets.</li>
+        </ol>
+      </section>
+
+      <section aria-label="Supported AI models">
+        <h2>Supported AI Models</h2>
+        <ul>
+          <li>OpenAI: GPT-4o, GPT-4o mini, GPT-4.1, o3, o4-mini</li>
+          <li>Anthropic: Claude Opus 4, Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3.5 Haiku</li>
+          <li>Google: Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash</li>
+          <li>Meta: Llama 4 Maverick, Llama 4 Scout, Llama 3.3 70B</li>
+          <li>Mistral AI: Mistral Large, Mistral Medium, Mistral Small, Codestral</li>
+          <li>Cohere: Command R, Command R+, Command A</li>
+        </ul>
+        <p>New models are added regularly as they become available on OpenRouter.</p>
+      </section>
+
+      <section aria-label="Key features">
+        <h2>Key Features</h2>
+        <ul>
+          <li>Side-by-side AI model comparison on custom prompts</li>
+          <li>Independent AI judges for impartial evaluation</li>
+          <li>Blind evaluation prevents model-name bias</li>
+          <li>Multi-run evaluations for statistical reliability and consistency analysis</li>
+          <li>Parallel dataset testing for data sensitivity analysis</li>
+          <li>Supreme Court mode with elite judge panel (2x vote weight)</li>
+          <li>Borda Count ranked voting aggregation, resistant to outlier bias</li>
+          <li>Comprehensive reports: scoring matrices, win rates, standard deviations, cost analysis</li>
+          <li>Free and transparent — users provide their own OpenRouter API key</li>
+        </ul>
+      </section>
+
+      <section aria-label="Frequently Asked Questions">
+        <h2>Frequently Asked Questions</h2>
+        <dl>
+          <dt>Is Agent Clash free?</dt>
+          <dd>Yes. Agent Clash is free. You provide your own OpenRouter API key and pay only the model inference costs, typically a few cents per evaluation.</dd>
+          <dt>What is blind evaluation?</dt>
+          <dd>AI judges do not know which model produced which response. Responses are labeled anonymously (Response A, B, C, etc.) so that scores reflect actual quality, not model reputation.</dd>
+          <dt>What is the Supreme Court feature?</dt>
+          <dd>Supreme Court mode adds three elite judges (GPT-4o, Claude Sonnet, Gemini Pro) whose votes carry double weight, providing an extra layer of evaluation rigor.</dd>
+          <dt>What is the Borda Count?</dt>
+          <dd>A ranked voting method where each position earns points. First place gets N points, second N-1, etc. The model with the highest total wins. This method is resistant to outlier votes.</dd>
+          <dt>Why run multiple evaluation rounds?</dt>
+          <dd>AI responses vary due to temperature randomness. Multiple rounds reveal whether a model wins consistently. Combined with parallel datasets, multi-run evaluations produce robust statistics with standard deviations and win rates.</dd>
+          <dt>Is my API key stored?</dt>
+          <dd>Without an account, your API key stays in your browser only. With an account, it is stored encrypted on our servers and can be deleted at any time.</dd>
+        </dl>
+      </section>
+    </article>
+  </main>
   <!-- Colosseum Gate -->
   <div id="gateOverlay" class="gate-overlay">
     <div class="gate-left"><div class="gate-emblem">🏛️</div><div class="gate-text">Agent Clash</div></div>
@@ -1000,6 +1164,16 @@
   <div id="settingsBackdrop" class="settings-backdrop" onclick="window.dispatchEvent(new CustomEvent('close-settings'));"></div>
 
   <div id="root"></div>
+
+  <noscript>
+    <div style="max-width:720px;margin:40px auto;padding:24px;color:#d4c9a8;font-family:Inter,sans-serif;line-height:1.7">
+      <h1 style="font-size:28px;color:#daa520">Agent Clash — AI Model Evaluation Arena</h1>
+      <p>Agent Clash is a free AI model evaluation platform that compares large language models side by side using independent AI judges.</p>
+      <p>Submit your prompt to GPT, Claude, Gemini, Llama, Mistral, or Command simultaneously. Independent AI judges score each response blindly. Multi-run evaluations and Borda Count aggregation produce statistically robust, reproducible rankings.</p>
+      <p><strong>JavaScript is required to use Agent Clash.</strong> Please enable JavaScript in your browser settings.</p>
+      <p>Learn more: <a href="/about.html" style="color:#daa520">About Agent Clash</a> | <a href="/privacy.html" style="color:#daa520">Privacy Policy</a> | <a href="/terms.html" style="color:#daa520">Terms of Service</a></p>
+    </div>
+  </noscript>
 
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
@@ -2592,6 +2766,71 @@
             </section>
           )}
 
+          {/* ========== EXPLAINER SECTION (visible, semantic) ========== */}
+          {heroVisible && !result && (
+            <section className="container mx-auto px-6 max-w-3xl pb-12 fade-in-up" style={{ marginTop: '-20px' }}>
+              {/* What is Agent Clash */}
+              <div className="rounded-xl border border-amber-800/20 p-6 mb-6" style={{ background: 'rgba(218,165,32,0.03)' }}>
+                <h2 className="font-cinzel text-lg font-bold text-amber-400 mb-3">What is Agent Clash?</h2>
+                <p className="text-sm text-amber-600/80 leading-relaxed mb-2">
+                  Agent Clash is a free AI model evaluation platform that compares large language models side by side using independent AI judges.
+                  Submit your prompt to GPT, Claude, Gemini, Llama, Mistral or Command simultaneously — then let impartial AI judges score each response blindly.
+                </p>
+                <p className="text-sm text-amber-600/80 leading-relaxed">
+                  Multi-run evaluations, parallel datasets, and Borda Count aggregation ensure statistically robust, reproducible rankings.
+                  Built for developers, researchers, and AI enthusiasts who want transparent, data-driven benchmarks.
+                </p>
+              </div>
+
+              {/* How it works summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="rounded-lg border border-amber-800/15 p-4 text-center" style={{ background: 'rgba(218,165,32,0.02)' }}>
+                  <div className="text-2xl mb-2">📤</div>
+                  <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">1. Prompt Dispatch</h3>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">Same prompt sent to all selected models simultaneously via OpenRouter API.</p>
+                </div>
+                <div className="rounded-lg border border-amber-800/15 p-4 text-center" style={{ background: 'rgba(218,165,32,0.02)' }}>
+                  <div className="text-2xl mb-2">⚖️</div>
+                  <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">2. Blind AI Judging</h3>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">Independent AI judges score anonymized responses on accuracy, reasoning, and clarity.</p>
+                </div>
+                <div className="rounded-lg border border-amber-800/15 p-4 text-center" style={{ background: 'rgba(218,165,32,0.02)' }}>
+                  <div className="text-2xl mb-2">🏆</div>
+                  <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">3. Robust Rankings</h3>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">Borda Count aggregation across multiple runs produces fair, reproducible results.</p>
+                </div>
+              </div>
+
+              {/* Quick FAQ (visible) */}
+              <div className="rounded-xl border border-amber-800/20 p-6" style={{ background: 'rgba(218,165,32,0.03)' }}>
+                <h2 className="font-cinzel text-lg font-bold text-amber-400 mb-4">Frequently Asked Questions</h2>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-amber-300 mb-1">Is Agent Clash free?</h3>
+                    <p className="text-xs text-amber-700 leading-relaxed">Yes. Agent Clash is free. You provide your own OpenRouter API key and pay only the model inference costs — typically a few cents per evaluation.</p>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(218,165,32,0.08)', paddingTop: '12px' }}>
+                    <h3 className="text-sm font-semibold text-amber-300 mb-1">What is blind evaluation?</h3>
+                    <p className="text-xs text-amber-700 leading-relaxed">AI judges do not know which model produced which response. Responses are labeled anonymously (Response A, B, C…) so scores reflect actual quality, not model reputation.</p>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(218,165,32,0.08)', paddingTop: '12px' }}>
+                    <h3 className="text-sm font-semibold text-amber-300 mb-1">Why run multiple evaluation rounds?</h3>
+                    <p className="text-xs text-amber-700 leading-relaxed">AI responses vary due to temperature randomness. Multiple rounds reveal consistency patterns. Combined with parallel datasets, they produce robust statistics with standard deviations and win rates.</p>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(218,165,32,0.08)', paddingTop: '12px' }}>
+                    <h3 className="text-sm font-semibold text-amber-300 mb-1">What is the Supreme Court feature?</h3>
+                    <p className="text-xs text-amber-700 leading-relaxed">Three elite AI judges (GPT-4o, Claude Sonnet, Gemini Pro) perform a second blind evaluation with 2x weighted votes, acting as a quality anchor and tie-breaker.</p>
+                  </div>
+                  <div className="pt-2 text-center">
+                    <a href="/about.html" target="_blank" rel="noopener" className="text-xs text-amber-500 hover:text-amber-300 transition-colors">
+                      Learn more about Agent Clash →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* ========== MAIN CONTENT ========== */}
           <div ref={formRef} className="container mx-auto px-4 py-8 max-w-5xl">
 
@@ -3365,8 +3604,9 @@
 
                   {/* Links column */}
                   <div>
-                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Legal</h4>
+                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Links</h4>
                     <div className="space-y-2">
+                      <a href="/about.html" target="_blank" rel="noopener" className="block text-sm text-amber-600 hover:text-amber-400 transition-colors">About Agent Clash</a>
                       <a href="/privacy.html" target="_blank" rel="noopener" className="block text-sm text-amber-600 hover:text-amber-400 transition-colors">Privacy Policy</a>
                       <a href="/terms.html" target="_blank" rel="noopener" className="block text-sm text-amber-600 hover:text-amber-400 transition-colors">Terms of Service</a>
                     </div>
