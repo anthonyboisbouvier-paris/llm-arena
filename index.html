@@ -2301,26 +2301,27 @@
         const heights = [90, 130, 70];
 
         return (
-          <div className="flex items-end justify-center gap-4 py-4 podium-container">
+          <div className="flex items-end justify-center py-4 podium-container">
             {podiumOrder.map((p, i) => (
               <div key={i} className="flex flex-col items-center" style={{
+                width: p.rank === 1 ? 140 : 120,
                 opacity: step > i ? 1 : 0,
                 transform: step > i ? 'translateY(0)' : 'translateY(60px)',
                 transition: `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.3}s`
               }}>
-                {p.rank === 1 && step >= 2 && <div className="text-4xl mb-2 champion-crown">👑</div>}
+                {p.rank === 1 && step >= 2 && <div className="text-4xl mb-1 champion-crown">👑</div>}
                 {(() => {
                   const ch = getProviderChar(p.provider);
                   const size = p.rank === 1 ? 80 : 64;
                   return ch.img ? (
                     <img src={ch.img} alt={ch.name}
-                      className="mb-2 select-none"
+                      className="mb-1 select-none mx-auto block"
                       style={{
                         width: size, height: size, objectFit: 'contain',
                         filter: `drop-shadow(0 0 ${p.rank === 1 ? '20px' : '12px'} ${p.color}88)`,
                       }} />
                   ) : (
-                    <div className="rounded-full flex items-center justify-center text-white font-bold shadow-xl mb-2"
+                    <div className="rounded-full flex items-center justify-center text-white font-bold shadow-xl mb-1 mx-auto"
                       style={{
                         width: p.rank === 1 ? 56 : 48, height: p.rank === 1 ? 56 : 48,
                         background: `linear-gradient(135deg, ${p.color}, ${p.color}cc)`,
@@ -2331,11 +2332,11 @@
                     </div>
                   );
                 })()}
-                <div className="text-xs font-bold text-center mb-1 max-w-[100px] truncate" style={{ color: p.color }}>
+                <div className="text-xs font-bold text-center mb-1 w-full truncate px-1" style={{ color: p.color }}>
                   {p.name}
                 </div>
-                <div className="podium-bar rounded-t-lg" style={{
-                  width: p.rank === 1 ? 90 : 75,
+                <div className="podium-bar rounded-t-lg mx-auto" style={{
+                  width: p.rank === 1 ? 100 : 85,
                   height: step > i ? heights[i] : 0,
                   background: `linear-gradient(to top, ${p.color}33, ${p.color}11)`,
                   borderTop: `3px solid ${p.color}`,
