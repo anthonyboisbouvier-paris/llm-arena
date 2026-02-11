@@ -2707,7 +2707,15 @@
                       ].map(preset => (
                         <button key={preset.key} type="button"
                           onClick={() => setSuggestionCriteria({ priority1: preset.key })}
-                          className={`preset-btn px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          onDoubleClick={() => {
+                            setSuggestionCriteria({ priority1: preset.key });
+                            const presetIds = curatedPresets[preset.key] || [];
+                            const available = presetIds.filter(pid => availableModels.some(m => m.id === pid));
+                            const newSelected = [...new Set([...selectedModels, ...available])];
+                            setSelectedModels(newSelected);
+                          }}
+                          title="Double-click to select recommended"
+                          className={`preset-btn px-3 py-2 rounded-lg text-xs font-medium transition-all relative group ${
                             suggestionCriteria.priority1 === preset.key
                               ? 'active text-amber-100 border-amber-600/60'
                               : 'text-amber-600 border-amber-800/30 hover:text-amber-400 hover:bg-amber-900/20'
@@ -2717,6 +2725,9 @@
                             border: '1px solid'
                           }}>
                           {preset.label}
+                          <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-amber-500/70 bg-amber-950/90 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            Double-click to select ★
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -2821,23 +2832,30 @@
                                 {/* Model list dropdown */}
                                 <div className={`provider-models-dropdown ${isExpanded ? 'open' : ''}`}>
                                   <div className="mt-2 rounded-lg border" style={{ borderColor: c.bg + '33', background: 'rgba(0,0,0,0.3)' }}>
-                                    {models.map(model => {
+                                    {[...models].sort((a, b) => {
+                                      const aS = suggestions.includes(a.id) ? 0 : 1;
+                                      const bS = suggestions.includes(b.id) ? 0 : 1;
+                                      return aS - bS;
+                                    }).map(model => {
                                       const sel = selectedModels.includes(model.id);
                                       const isSuggested = suggestions.includes(model.id);
                                       return (
                                         <div key={model.id}
                                           className={`model-row flex items-center gap-2 px-3 py-2 cursor-pointer ${sel ? 'selected' : ''}`}
-                                          style={{ background: sel ? c.bg + '18' : isSuggested ? 'rgba(218,165,32,0.06)' : 'transparent' }}
+                                          style={{
+                                            background: sel ? c.bg + '18' : isSuggested ? 'rgba(218,165,32,0.12)' : 'transparent',
+                                            borderLeft: isSuggested ? `2px solid ${c.bg}88` : '2px solid transparent',
+                                          }}
                                           onClick={() => toggleModel(model.id)}>
                                           <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                                            sel ? 'border-transparent' : 'border-amber-800/40'
+                                            sel ? 'border-transparent' : isSuggested ? 'border-amber-500/50' : 'border-amber-800/40'
                                           }`} style={{ background: sel ? c.bg : 'transparent' }}>
                                             {sel && <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
                                           </div>
-                                          <span className={`text-[11px] ${sel ? 'text-amber-100 font-medium' : 'text-amber-400/70'}`}>
+                                          <span className={`text-[11px] ${sel ? 'text-amber-100 font-medium' : isSuggested ? 'text-amber-200/90 font-medium' : 'text-amber-400/70'}`}>
                                             {model.name}
                                           </span>
-                                          {isSuggested && !sel && <span className="ml-auto text-[9px] text-amber-500/60">★</span>}
+                                          {isSuggested && !sel && <span className="ml-auto text-[9px] text-amber-400 font-bold">★</span>}
                                           {sel && <span className="ml-auto text-sm">{ch.weapon}</span>}
                                         </div>
                                       );
