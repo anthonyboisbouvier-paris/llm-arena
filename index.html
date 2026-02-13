@@ -1895,10 +1895,10 @@
       // Auth functions - uses GET + base64 query param to avoid CORS preflight
       const authFetch = async (endpoint, body) => {
         const d = btoa(JSON.stringify(body));
-        const res = await fetch(`${AUTH_BASE}/${endpoint}-get?d=${encodeURIComponent(d)}`);
+        const res = await fetch(`${AUTH_BASE}/${endpoint}-get?d=${encodeURIComponent(d)}&_t=${Date.now()}`, { cache: 'no-store' });
         const text = await res.text();
         if (!text) return { success: false, error: 'Empty response from server' };
-        try { return JSON.parse(text); } 
+        try { return JSON.parse(text); }
         catch { return { success: false, error: text.slice(0, 200) }; }
       };
 
