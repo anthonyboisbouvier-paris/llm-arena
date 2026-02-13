@@ -1945,7 +1945,7 @@
       };
 
       const handleResetPassword = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         if (!resetForm.code || !resetForm.newPassword) {
           setAuthError('Please fill in all fields');
           return;
@@ -2742,10 +2742,10 @@
 
                 {/* FORGOT PASSWORD - STEP 2: Enter code + new password */}
                 {authMode === 'reset-code' && (
-                  <form onSubmit={handleResetPassword} className="space-y-3">
+                  <div className="space-y-3">
                     <div>
                       <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Reset Code</label>
-                      <input type="text" required maxLength={6} value={resetForm.code}
+                      <input type="text" maxLength={6} value={resetForm.code}
                         onChange={e => setResetForm(p => ({...p, code: e.target.value.replace(/\D/g, '')}))}
                         className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors text-center tracking-[0.3em] font-mono text-lg"
                         style={{ background: 'rgba(0,0,0,0.4)' }}
@@ -2753,18 +2753,18 @@
                     </div>
                     <div>
                       <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">New Password</label>
-                      <input type="password" required minLength={6} value={resetForm.newPassword}
+                      <input type="password" value={resetForm.newPassword}
                         onChange={e => setResetForm(p => ({...p, newPassword: e.target.value}))}
                         className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
                         style={{ background: 'rgba(0,0,0,0.4)' }}
                         placeholder="••••••••" />
                     </div>
-                    <button type="submit" disabled={authLoading}
+                    <button type="button" disabled={authLoading} onClick={handleResetPassword}
                       className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
                       style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
                       {authLoading ? <><Icon name="hourglass" size={14} /> Resetting...</> : <><Icon name="shield" size={14} /> Reset Password</>}
                     </button>
-                  </form>
+                  </div>
                 )}
 
                 <p className="text-center text-[11px] text-amber-700 mt-4">
