@@ -1883,10 +1883,12 @@
       const [authEmail, setAuthEmail] = useState(() => localStorage.getItem('arena_email') || null);
       const [showAuth, setShowAuth] = useState(false);
       const [showHistory, setShowHistory] = useState(false);
-      const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+      const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset-code'
       const [authLoading, setAuthLoading] = useState(false);
       const [authError, setAuthError] = useState('');
+      const [authSuccess, setAuthSuccess] = useState('');
       const [authForm, setAuthForm] = useState({ email: '', password: '' });
+      const [resetForm, setResetForm] = useState({ email: '', code: '', newPassword: '' });
       const [battleHistory, setBattleHistory] = useState([]);
       const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -1918,6 +1920,46 @@
           if (data.apiKey) { setApiKey(data.apiKey); localStorage.setItem('openrouter_api_key', data.apiKey); }
           setShowAuth(false);
           setAuthForm({ email: '', password: '' });
+        } catch (err) {
+          setAuthError(err.message);
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      const handleRequestReset = async (e) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        setAuthError('');
+        setAuthSuccess('');
+        try {
+          const data = await authFetch('arena-auth', { action: 'request-reset', email: resetForm.email });
+          if (!data.success) throw new Error(data.error || 'Request failed');
+          setAuthSuccess('If this email exists, a reset code has been sent. Check your inbox.');
+          setAuthMode('reset-code');
+        } catch (err) {
+          setAuthError(err.message);
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      const handleResetPassword = async (e) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        setAuthError('');
+        setAuthSuccess('');
+        try {
+          const data = await authFetch('arena-auth', {
+            action: 'reset-password',
+            email: resetForm.email,
+            resetCode: resetForm.code,
+            newPassword: resetForm.newPassword
+          });
+          if (!data.success) throw new Error(data.error || 'Reset failed');
+          setAuthSuccess('Password reset! You can now sign in.');
+          setResetForm({ email: '', code: '', newPassword: '' });
+          setTimeout(() => { setAuthMode('login'); setAuthSuccess(''); }, 2000);
         } catch (err) {
           setAuthError(err.message);
         } finally {
@@ -2623,42 +2665,106 @@
                 onClick={e => e.stopPropagation()}>
                 <button onClick={() => setShowAuth(false)} className="absolute top-3 right-3 text-amber-700 hover:text-amber-400 text-lg">✕</button>
                 <h2 className="text-xl font-bold text-amber-200 mb-1 font-cinzel text-center">
-                  {authMode === 'login' ? <><Icon name="swords" size={18} /> Enter the Arena</> : <><Icon name="shield" size={18} /> Join the Arena</>}
+                  {authMode === 'login' ? <><Icon name="swords" size={18} /> Enter the Arena</> : authMode === 'register' ? <><Icon name="shield" size={18} /> Join the Arena</> : authMode === 'forgot' ? <><Icon name="key" size={18} /> Reset Password</> : <><Icon name="key" size={18} /> Enter Code</>}
                 </h2>
                 <p className="text-[11px] text-amber-700 text-center mb-5">
-                  {authMode === 'login' ? 'Sign in to sync your API key & battle history' : 'Create an account to save your progress'}
+                  {authMode === 'login' ? 'Sign in to sync your API key & battle history' : authMode === 'register' ? 'Create an account to save your progress' : authMode === 'forgot' ? 'Enter your email to receive a reset code' : 'Enter the 6-digit code sent to your email'}
                 </p>
                 {authError && (
                   <div className="mb-4 p-2.5 rounded-lg border border-red-800/40 bg-red-900/15 text-[11px] text-red-300">{authError}</div>
                 )}
-                <form onSubmit={handleAuth} className="space-y-3">
-                  <div>
-                    <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Email</label>
-                    <input type="email" required value={authForm.email} 
-                      onChange={e => setAuthForm(p => ({...p, email: e.target.value}))}
-                      className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
-                      style={{ background: 'rgba(0,0,0,0.4)' }}
-                      placeholder="gladiator@arena.com" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Password</label>
-                    <input type="password" required minLength={6} value={authForm.password}
-                      onChange={e => setAuthForm(p => ({...p, password: e.target.value}))}
-                      className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
-                      style={{ background: 'rgba(0,0,0,0.4)' }}
-                      placeholder="••••••••" />
-                  </div>
-                  <button type="submit" disabled={authLoading}
-                    className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
-                    {authLoading ? <><Icon name="hourglass" size={14} /> Please wait...</> : authMode === 'login' ? <><Icon name="swords" size={14} /> Sign In</> : <><Icon name="shield" size={14} /> Create Account</>}
-                  </button>
-                </form>
+                {authSuccess && (
+                  <div className="mb-4 p-2.5 rounded-lg border border-emerald-800/40 bg-emerald-900/15 text-[11px] text-emerald-300">{authSuccess}</div>
+                )}
+
+                {/* LOGIN / REGISTER FORM */}
+                {(authMode === 'login' || authMode === 'register') && (
+                  <>
+                    <form onSubmit={handleAuth} className="space-y-3">
+                      <div>
+                        <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Email</label>
+                        <input type="email" required value={authForm.email}
+                          onChange={e => setAuthForm(p => ({...p, email: e.target.value}))}
+                          className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                          style={{ background: 'rgba(0,0,0,0.4)' }}
+                          placeholder="gladiator@arena.com" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Password</label>
+                        <input type="password" required minLength={6} value={authForm.password}
+                          onChange={e => setAuthForm(p => ({...p, password: e.target.value}))}
+                          className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                          style={{ background: 'rgba(0,0,0,0.4)' }}
+                          placeholder="••••••••" />
+                      </div>
+                      <button type="submit" disabled={authLoading}
+                        className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
+                        style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
+                        {authLoading ? <><Icon name="hourglass" size={14} /> Please wait...</> : authMode === 'login' ? <><Icon name="swords" size={14} /> Sign In</> : <><Icon name="shield" size={14} /> Create Account</>}
+                      </button>
+                    </form>
+                    {authMode === 'login' && (
+                      <p className="text-center text-[11px] text-amber-700 mt-2">
+                        <button onClick={() => { setAuthMode('forgot'); setAuthError(''); setAuthSuccess(''); setResetForm(f => ({...f, email: authForm.email})); }}
+                          className="text-amber-500 hover:text-amber-300 underline underline-offset-2">
+                          Forgot password?
+                        </button>
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {/* FORGOT PASSWORD - STEP 1: Enter email */}
+                {authMode === 'forgot' && (
+                  <form onSubmit={handleRequestReset} className="space-y-3">
+                    <div>
+                      <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Email</label>
+                      <input type="email" required value={resetForm.email}
+                        onChange={e => setResetForm(p => ({...p, email: e.target.value}))}
+                        className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}
+                        placeholder="gladiator@arena.com" />
+                    </div>
+                    <button type="submit" disabled={authLoading}
+                      className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
+                      {authLoading ? <><Icon name="hourglass" size={14} /> Sending...</> : <><Icon name="key" size={14} /> Send Reset Code</>}
+                    </button>
+                  </form>
+                )}
+
+                {/* FORGOT PASSWORD - STEP 2: Enter code + new password */}
+                {authMode === 'reset-code' && (
+                  <form onSubmit={handleResetPassword} className="space-y-3">
+                    <div>
+                      <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">Reset Code</label>
+                      <input type="text" required pattern="[0-9]{6}" maxLength={6} value={resetForm.code}
+                        onChange={e => setResetForm(p => ({...p, code: e.target.value.replace(/\D/g, '')}))}
+                        className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors text-center tracking-[0.3em] font-mono text-lg"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}
+                        placeholder="000000" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold">New Password</label>
+                      <input type="password" required minLength={6} value={resetForm.newPassword}
+                        onChange={e => setResetForm(p => ({...p, newPassword: e.target.value}))}
+                        className="mt-1 w-full px-3 py-2.5 rounded-lg text-sm text-amber-100 border border-amber-800/30 focus:border-amber-600/60 focus:outline-none transition-colors"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}
+                        placeholder="••••••••" />
+                    </div>
+                    <button type="submit" disabled={authLoading}
+                      className="w-full py-3 rounded-xl text-sm font-bold text-[#1a0f06] transition-all hover:scale-[1.02] disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #daa520, #b8860b)' }}>
+                      {authLoading ? <><Icon name="hourglass" size={14} /> Resetting...</> : <><Icon name="shield" size={14} /> Reset Password</>}
+                    </button>
+                  </form>
+                )}
+
                 <p className="text-center text-[11px] text-amber-700 mt-4">
-                  {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                  <button onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setAuthError(''); }}
+                  {(authMode === 'login' || authMode === 'forgot' || authMode === 'reset-code') ? "Don't have an account? " : "Already have an account? "}
+                  <button onClick={() => { setAuthMode(authMode === 'register' ? 'login' : authMode === 'login' ? 'register' : 'login'); setAuthError(''); setAuthSuccess(''); }}
                     className="text-amber-400 hover:text-amber-200 underline underline-offset-2">
-                    {authMode === 'login' ? 'Register' : 'Sign in'}
+                    {authMode === 'register' ? 'Sign in' : (authMode === 'forgot' || authMode === 'reset-code') ? 'Back to Sign in' : 'Register'}
                   </button>
                 </p>
               </div>
