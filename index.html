@@ -34,7 +34,8 @@
       "Multiple evaluation runs for statistical robustness",
       "Parallel dataset testing",
       "Support for GPT, Claude, Gemini, Llama, Mistral, Command",
-      "Detailed scoring reports with per-criteria breakdowns",
+      "Dynamic AI-generated evaluation criteria tailored to each prompt",
+      "Per-criteria scoring (1-5) with judge justifications",
       "Supreme Court mode with elite judge panel",
       "Free and open platform"
     ],
@@ -70,7 +71,7 @@
         "name": "How does Agent Clash evaluate AI models?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "You submit a prompt and select which AI models to test. All models receive the same prompt simultaneously. Then, independent AI judges (separate LLM instances acting as evaluators) score each response on criteria like accuracy, reasoning, depth, and clarity. You can run multiple iterations and use parallel datasets for statistically robust results."
+          "text": "You submit a prompt and select which AI models to test. All models receive the same prompt simultaneously. An AI model dynamically identifies the most relevant evaluation criteria for your specific prompt (e.g. code correctness, clarity, reasoning depth). Independent AI judges then score each response on those criteria (1-5 scale) and rank them. You can run multiple iterations and use parallel datasets for statistically robust results."
         }
       },
       {
@@ -102,7 +103,7 @@
         "name": "How are the rankings calculated?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Each AI judge scores every model response on multiple criteria. Scores are averaged across all judges and all evaluation runs. When using multiple datasets, results are aggregated to show how models perform across different types of inputs. The final ranking reflects statistically robust, reproducible performance differences."
+          "text": "For each prompt, an AI model dynamically generates 3-5 evaluation criteria tailored to the task. Each AI judge ranks the responses and rates them on every criterion (1-5 scale), providing justifications for low scores. Scores are averaged across all judges and evaluation runs. When using multiple datasets, results are aggregated to show how models perform across different types of inputs. The final ranking reflects statistically robust, reproducible performance differences."
         }
       }
     ]
@@ -965,6 +966,70 @@
     }
     .report-wrapper .response::-webkit-scrollbar { width: 4px; }
     .report-wrapper .response::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+    .report-wrapper .criteria-section {
+      margin: 0 0 32px 0;
+    }
+    .report-wrapper .criteria-badges {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    }
+    .report-wrapper .criteria-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border: 1px solid #c4b5fd; border-radius: 999px;
+      padding: 5px 14px; font-size: 12.5px; font-weight: 600;
+      color: #5b21b6 !important; letter-spacing: 0.1px;
+    }
+    .report-wrapper .criteria-badge .criteria-icon {
+      font-size: 13px;
+    }
+    .report-wrapper .criteria-source {
+      display: inline-block; font-size: 11px; color: #78716c !important;
+      margin-left: 8px; font-weight: 400; font-style: italic;
+    }
+    .report-wrapper .criteria-scores-table th {
+      background: #312e81; font-size: 10px;
+    }
+    .report-wrapper .criteria-score-cell {
+      font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+      font-weight: 700; font-size: 13px; position: relative;
+    }
+    .report-wrapper .criteria-reason {
+      display: block; font-size: 10px; font-weight: 400;
+      color: #b91c1c !important; font-style: italic; margin-top: 2px;
+      line-height: 1.3; max-width: 120px; cursor: default;
+      position: relative;
+    }
+    .report-wrapper .criteria-reason-wrap {
+      position: relative; display: inline-block;
+    }
+    .report-wrapper .criteria-tooltip {
+      display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: #1e1b4b; color: #e2e8f0 !important; padding: 8px 12px; border-radius: 8px;
+      font-size: 11px; font-style: normal; font-weight: 400; line-height: 1.5;
+      min-width: 180px; max-width: 260px; z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25); white-space: normal;
+      pointer-events: none;
+    }
+    .report-wrapper .criteria-tooltip::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 6px solid transparent; border-top-color: #1e1b4b;
+    }
+    .report-wrapper .criteria-reason-wrap:hover .criteria-tooltip {
+      display: block;
+    }
+    .report-wrapper .criteria-tooltip .tt-reason {
+      padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .report-wrapper .criteria-tooltip .tt-reason:last-child { border-bottom: none; }
+    .report-wrapper .criteria-tooltip .tt-badge {
+      display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px;
+      border-radius: 4px; margin-right: 4px;
+    }
+    .report-wrapper .criteria-tooltip .tt-supreme { background: #fbbf24; color: #78350f !important; }
+    .report-wrapper .criteria-tooltip .tt-regular { background: #6366f1; color: white !important; }
+    .report-wrapper .criteria-avg-row td {
+      font-weight: 800 !important; border-top: 2px solid #e7e5e4;
+    }
     .report-wrapper .conclusions {
       background: #fafaf9; border-radius: 12px; padding: 24px 28px; margin: 36px 0;
       border: 1px solid #e7e5e4;
@@ -1033,7 +1098,9 @@
           Agent Clash is a free, web-based AI model evaluation platform. Users submit a prompt to multiple
           large language models simultaneously — including GPT (OpenAI), Claude (Anthropic), Gemini (Google),
           Llama (Meta), Mistral, and Command (Cohere). Independent AI judges then evaluate each response
-          blindly, scoring them on criteria such as accuracy, reasoning, depth, and clarity.
+          blindly. For each prompt, AI dynamically identifies the most relevant evaluation criteria
+          (e.g. code correctness, reasoning depth, factual accuracy) and judges rate each response on
+          those criteria from 1 to 5, with justifications for low scores.
         </p>
         <p>
           The platform supports multiple evaluation runs and parallel datasets to produce statistically robust,
@@ -1050,10 +1117,11 @@
         <h2>How Does Agent Clash Work?</h2>
         <ol>
           <li><strong>Prompt dispatch:</strong> Your prompt is sent simultaneously to all selected AI models via the OpenRouter API. Each model generates its response independently with the same settings.</li>
-          <li><strong>Blind evaluation by AI judges:</strong> Independent AI judges evaluate each response without knowing which model produced it. Responses are labeled anonymously (Response A, Response B, etc.) to prevent bias.</li>
+          <li><strong>Dynamic criteria generation:</strong> An AI model analyzes your prompt and identifies 3-5 evaluation criteria most relevant to the task (e.g. code correctness, clarity of explanation, factual accuracy).</li>
+          <li><strong>Blind evaluation by AI judges:</strong> Independent AI judges evaluate each response without knowing which model produced it. They rank responses and rate each one on every criterion (1-5 scale), with justifications for scores of 3 or below.</li>
           <li><strong>Supreme Court review (optional):</strong> Three elite judges (GPT-4o, Claude Sonnet, Gemini Pro) perform a second blind evaluation with 2x weighted votes, acting as a quality anchor.</li>
           <li><strong>Borda Count aggregation:</strong> All judge rankings are aggregated using the Borda Count method. First place earns N points, second place N-1, and so on. The highest-scoring model wins.</li>
-          <li><strong>Reports and analysis:</strong> Full scoring matrices, response times, costs, per-criteria breakdowns, win rates, standard deviations, and consistency metrics across runs and datasets.</li>
+          <li><strong>Reports and analysis:</strong> Full scoring matrices, per-criteria score breakdowns (1-5) with judge justifications, response times, costs, win rates, standard deviations, and consistency metrics across runs and datasets.</li>
         </ol>
       </section>
 
@@ -1080,6 +1148,8 @@
           <li>Parallel dataset testing for data sensitivity analysis</li>
           <li>Supreme Court mode with elite judge panel (2x vote weight)</li>
           <li>Borda Count ranked voting aggregation, resistant to outlier bias</li>
+          <li>Dynamic evaluation criteria tailored to each prompt (AI-generated, 3-5 criteria)</li>
+          <li>Per-criteria scoring (1-5) with judge justifications for low scores</li>
           <li>Comprehensive reports: scoring matrices, win rates, standard deviations, cost analysis</li>
           <li>Free and transparent — users provide their own OpenRouter API key</li>
         </ul>
@@ -1420,6 +1490,83 @@
 
       const labelTag = data._label ? `<div style="display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:10px;position:relative;z-index:1;">${data._label}</div><br>` : '';
 
+      // Build criteria badges HTML
+      let criteriaBadgesHtml = '';
+      const hasCriteria = data.evaluation_criteria && data.evaluation_criteria.length > 0;
+      if (hasCriteria) {
+        const sourceLabel = data.criteria_source === 'dynamic' ? 'AI-generated' : 'default';
+        const badges = data.evaluation_criteria.map(c => `<span class="criteria-badge"><span class="criteria-icon">🎯</span>${c}</span>`).join('');
+        criteriaBadgesHtml = `<div class="criteria-section">
+          <div style="font-size:13px;font-weight:600;color:#78716c;">Evaluation Criteria <span class="criteria-source">(${sourceLabel})</span></div>
+          <div class="criteria-badges">${badges}</div>
+        </div>`;
+      }
+
+      // Build criteria scores table HTML
+      let criteriaTableHtml = '';
+      if (hasCriteria && data.criteria_detail && data.criteria_detail.length > 0) {
+        const criteriaHeaders = data.evaluation_criteria.map(c => `<th>${c}</th>`).join('');
+        const getCriteriaColor = (avg) => {
+          if (avg == null) return '';
+          if (avg >= 4.5) return 'background-color: hsl(140, 60%, 85%);';
+          if (avg >= 3.5) return 'background-color: hsl(100, 50%, 87%);';
+          if (avg >= 2.5) return 'background-color: hsl(45, 60%, 87%);';
+          return 'background-color: hsl(0, 60%, 88%);';
+        };
+        const criteriaRows = data.criteria_detail.map(item => {
+          const medals = ['🥇','🥈','🥉'];
+          const medal = item.rank <= 3 ? medals[item.rank - 1] + ' ' : '';
+          const cells = data.evaluation_criteria.map(c => {
+            const info = item.criteria[c];
+            if (!info || info.avg == null) return '<td class="criteria-score-cell">-</td>';
+            const avg = info.avg;
+            const color = getCriteriaColor(avg);
+            // Reasons: can be enriched objects {text, score, is_supreme} or plain strings (backward compat)
+            const rawReasons = (info.reasons || []).filter(r => r && (typeof r === 'string' ? r.length > 0 : r.text));
+            let reasonHtml = '';
+            if (rawReasons.length > 0) {
+              // Normalize to objects
+              const enriched = rawReasons.map(r => typeof r === 'string' ? {text: r, score: null, is_supreme: false} : r);
+              // Pick best: supreme first, then lowest score
+              const sorted = [...enriched].sort((a, b) => {
+                if (a.is_supreme !== b.is_supreme) return a.is_supreme ? -1 : 1;
+                return (a.score || 99) - (b.score || 99);
+              });
+              const primary = sorted[0];
+              const others = enriched.length > 1 ? enriched : [];
+              const tooltipContent = others.length > 0 ? others.map(r => {
+                const badge = r.is_supreme
+                  ? '<span class="tt-badge tt-supreme">S</span>'
+                  : '<span class="tt-badge tt-regular">J</span>';
+                const sc = r.score != null ? ` (${r.score}/5)` : '';
+                return `<div class="tt-reason">${badge}${r.text}${sc}</div>`;
+              }).join('') : '';
+              const tooltipHtml = tooltipContent ? `<div class="criteria-tooltip">${tooltipContent}</div>` : '';
+              reasonHtml = `<span class="criteria-reason-wrap"><span class="criteria-reason">${primary.text}</span>${tooltipHtml}</span>`;
+            }
+            return `<td class="criteria-score-cell" style="${color}">${avg.toFixed(1)}${reasonHtml}</td>`;
+          }).join('');
+          return `<tr><td style="font-weight:700;">${medal}${item.rank}</td><td class="model">${item.model}</td>${cells}</tr>`;
+        }).join('');
+
+        // Compute average per criterion across all models
+        const avgRow = data.evaluation_criteria.map(c => {
+          const allAvgs = data.criteria_detail.map(d => d.criteria[c]?.avg).filter(a => a != null);
+          if (allAvgs.length === 0) return '<td class="criteria-score-cell">-</td>';
+          const globalAvg = allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length;
+          const color = getCriteriaColor(globalAvg);
+          return `<td class="criteria-score-cell" style="${color}">${globalAvg.toFixed(1)}</td>`;
+        }).join('');
+
+        criteriaTableHtml = `
+        <h2>🎯 Criteria Scores (1-5)</h2>
+        <table class="criteria-scores-table">
+          <tr><th>Rank</th><th>Model</th>${criteriaHeaders}</tr>
+          ${criteriaRows}
+          <tr class="criteria-avg-row"><td></td><td style="font-weight:700;text-align:left;color:#78716c !important;">Average</td>${avgRow}</tr>
+        </table>`;
+      }
+
       return `<div class="header">
       ${labelTag}<h1>⚔️ Agent Clash — Evaluation Report</h1>
       <div class="subtitle">${data.final_ranking.length} models · ${data.summary.total_judges} judges${data.config.enable_supreme_court ? ' + ' + data.summary.total_supreme_judges + ' supreme' : ''} · ${new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</div>
@@ -1429,6 +1576,7 @@
         📝 <strong>Prompt</strong><br><br>
         "${data.prompt}"
       </div>
+      ${criteriaBadgesHtml}
       <div class="winner-section">
         <h2>🏆 CHAMPION</h2>
         <div class="winner-name">${data.winner.model}</div>
@@ -1447,6 +1595,7 @@
         </tr>
         ${matrixRows}
       </table>
+      ${criteriaTableHtml}
       <h2>${rankingTitle}</h2>
       <table>
         <tr>
@@ -1467,6 +1616,7 @@
           <li>Total responses evaluated: <b>${data.summary.total_responses}</b></li>
           <li>Total cost: <b>$${totalCost.toFixed(6)}</b></li>
           <li>Aggregation method: <b>${data.summary.method}</b></li>
+          ${hasCriteria ? `<li>Evaluation criteria: <b>${data.evaluation_criteria.length}</b> (${data.criteria_source === 'dynamic' ? 'AI-generated' : 'default'})</li>` : ''}
         </ul>
       </div>
     </div>`;
