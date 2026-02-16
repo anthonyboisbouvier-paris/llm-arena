@@ -3095,14 +3095,17 @@
                   Agent Clash is a free benchmarking tool that lets you <strong className="text-amber-500">compare multiple AI models on the exact same task</strong>, side by side, in a single click. Pick your models (GPT, Claude, Gemini, Llama, Mistral, and more), enter a prompt, and get a clear winner.
                 </p>
                 <p className="text-sm text-amber-600/80 leading-relaxed mb-3">
-                  <strong className="text-amber-500">How it works:</strong> your prompt is sent to all selected models simultaneously. Then, a panel of independent AI judges evaluates every response blindly — they never know which model wrote what. For each prompt, the judges dynamically identify the most relevant criteria (code correctness, reasoning depth, factual accuracy, creativity…) and rate each response from 1 to 5, with written justifications.
+                  <strong className="text-amber-500">How it works:</strong> your prompt is sent to all selected models simultaneously. Then, a panel of independent AI judges evaluates every response blindly — they never know which model wrote what. For each prompt, the judges <strong className="text-amber-500">dynamically generate custom evaluation criteria</strong> tailored to your specific task (e.g. code correctness, reasoning depth, factual accuracy, creativity…). Each response is rated from 1 to 5 on every criterion, and <strong className="text-amber-500">any score below 3 comes with a detailed written justification</strong> explaining exactly what went wrong — so you don't just get a number, you get actionable feedback.
                 </p>
                 <p className="text-sm text-amber-600/80 leading-relaxed mb-3">
-                  <strong className="text-amber-500">What you get:</strong> a detailed report showing quality scores, stability across runs, response speed, and cost — everything you need to pick the right model for your specific use case, whether you're building a product, testing prompt strategies, or evaluating agents.
+                  <strong className="text-amber-500">What you get:</strong> a detailed report showing quality scores, stability across runs, response speed, and cost per model. The goal: <strong className="text-amber-500">help you choose the best model for your specific use case</strong> based on what matters most to you — raw quality, consistency, latency, or budget. Whether you're building a product, testing prompt strategies, or evaluating agents, you get data-driven rankings to make an informed decision.
                 </p>
-                <p className="text-xs text-amber-700/50 leading-relaxed">
-                  Powered by OpenRouter with your own API key. Run dozens of evaluations for under $1. A research paper validating this methodology has been submitted to DMLR (Data-centric Machine Learning Research).
+                <p className="text-xs text-amber-700/50 leading-relaxed mb-3">
+                  Powered by OpenRouter with your own API key. Run dozens of evaluations for under $1.
                 </p>
+                <a href="/paper.html" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, background: 'rgba(218,165,32,0.12)', border: '1px solid rgba(218,165,32,0.3)', color: '#daa520', textDecoration: 'none', transition: 'all 0.3s' }}>
+                  📚 Read the Research Paper →
+                </a>
               </div>
 
               {/* How it works summary */}
