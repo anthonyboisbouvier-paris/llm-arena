@@ -1003,16 +1003,19 @@
       position: relative; display: inline-block;
     }
     .report-wrapper .criteria-tooltip {
-      display: none; position: fixed; z-index: 99999;
-      background: #1e1b4b; color: #e2e8f0 !important; padding: 10px 14px; border-radius: 10px;
+      display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: #1e1b4b; color: #e2e8f0 !important; padding: 8px 12px; border-radius: 8px;
       font-size: 11px; font-style: normal; font-weight: 400; line-height: 1.5;
-      min-width: 200px; max-width: 320px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35); white-space: normal;
+      min-width: 180px; max-width: 260px; z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25); white-space: normal;
       pointer-events: none;
     }
     .report-wrapper .criteria-tooltip::after {
       content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
       border: 6px solid transparent; border-top-color: #1e1b4b;
+    }
+    .report-wrapper .criteria-reason-wrap:hover .criteria-tooltip {
+      display: block;
     }
     .report-wrapper .criteria-tooltip .tt-reason {
       padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -1060,133 +1063,7 @@
       .report-wrapper { box-shadow: none; }
     }
 
-
-    /* ===== DATASET BOX & CAROUSEL ===== */
-    .report-wrapper .dataset-box {
-      background: #fffbeb; border-left: 4px solid #f59e0b;
-      padding: 16px 20px; margin: 0 0 32px 0; border-radius: 12px;
-      font-size: 14px; color: #44403c !important;
-      line-height: 1.6; border: 1px solid #fef3c7;
-    }
-    .report-wrapper .dataset-box strong { font-weight: 700; font-size: 14px; color: #92400e !important; }
-    .report-wrapper .dataset-box pre {
-      background: #fefce8; border: 1px solid #fef08a; border-radius: 8px;
-      padding: 10px 14px; margin: 8px 0 0 0; font-size: 12px; line-height: 1.5;
-      overflow-x: auto; max-height: 150px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
-      color: #713f12 !important; font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-    }
-    .report-wrapper .dataset-carousel {
-      position: relative; margin: 0 0 32px 0;
-    }
-    .report-wrapper .dataset-carousel .carousel-track {
-      display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
-      scroll-behavior: smooth; padding: 4px 0 12px 0;
-      -ms-overflow-style: none; scrollbar-width: none;
-    }
-    .report-wrapper .dataset-carousel .carousel-track::-webkit-scrollbar { display: none; }
-    .report-wrapper .dataset-card {
-      flex: 0 0 calc(50% - 8px); scroll-snap-align: start;
-      background: #fffbeb; border-left: 4px solid #f59e0b;
-      padding: 14px 18px; border-radius: 12px; border: 1px solid #fef3c7;
-      min-width: 280px;
-    }
-    .report-wrapper .dataset-card .ds-label {
-      font-weight: 700; font-size: 12px; color: #92400e !important;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
-    }
-    .report-wrapper .dataset-card pre {
-      background: #fefce8; border: 1px solid #fef08a; border-radius: 6px;
-      padding: 8px 12px; margin: 0; font-size: 11px; line-height: 1.4;
-      overflow: hidden; max-height: 120px; white-space: pre-wrap; word-break: break-word;
-      color: #713f12 !important; font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-    }
-    .report-wrapper .carousel-nav {
-      display: flex; gap: 8px; justify-content: center; margin-top: 8px;
-    }
-    .report-wrapper .carousel-nav button {
-      background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px;
-      padding: 6px 16px; font-size: 13px; cursor: pointer; color: #44403c;
-      font-weight: 600; transition: all 0.15s;
-    }
-    .report-wrapper .carousel-nav button:hover { background: #e7e5e4; }
-
-    /* ===== LOW SCORES TABLE ===== */
-    .report-wrapper .low-scores-section { margin: 32px 0; }
-    .report-wrapper .low-scores-section h2 { color: #b91c1c !important; }
-    .report-wrapper .low-scores-table th {
-      background: #7f1d1d; font-size: 10px;
-    }
-    .report-wrapper .low-scores-table td { font-size: 12.5px; text-align: left; }
-    .report-wrapper .low-score-1 { background: #fef2f2 !important; }
-    .report-wrapper .low-score-2 { background: #fffbeb !important; }
-    .report-wrapper .score-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 24px; height: 24px; border-radius: 6px; font-weight: 800; font-size: 13px; color: white !important;
-    }
-    .report-wrapper .score-badge.sb-1 { background: #dc2626; }
-    .report-wrapper .score-badge.sb-2 { background: #f59e0b; }
-
-    /* ===== COMPARE FEATURE ===== */
-    .report-wrapper .compare-check {
-      width: 18px; height: 18px; cursor: pointer; accent-color: #4338ca;
-    }
-    .report-wrapper .compare-btn {
-      display: none; margin: 16px auto; padding: 10px 24px;
-      background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
-      color: white !important; border: none; border-radius: 10px;
-      font-weight: 700; font-size: 14px; cursor: pointer;
-      letter-spacing: 0.3px; transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(67,56,202,0.3);
-    }
-    .report-wrapper .compare-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(67,56,202,0.4); }
-    .compare-overlay {
-      position: fixed; inset: 0; z-index: 99998;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-      display: flex; align-items: flex-start; justify-content: center;
-      padding: 40px 20px; overflow-y: auto;
-    }
-    .compare-container {
-      display: flex; gap: 20px; max-width: 1600px; width: 100%;
-      flex-wrap: nowrap; overflow-x: auto;
-    }
-    .compare-card {
-      flex: 1 1 0; min-width: 350px; max-width: 600px;
-      background: white; border-radius: 16px; overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-    .compare-card-header {
-      padding: 16px 20px; text-align: center;
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-      color: white !important;
-    }
-    .compare-card-header .cc-rank { font-size: 28px; margin-bottom: 4px; }
-    .compare-card-header .cc-model { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-    .compare-card-header .cc-score { font-size: 13px; opacity: 0.7; margin-top: 2px; }
-    .compare-card-body {
-      padding: 20px; max-height: 60vh; overflow-y: auto;
-      font-size: 13.5px; line-height: 1.7; color: #1f2937 !important;
-    }
-    .compare-card-body pre { background: #f5f5f4; padding: 10px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
-    .compare-card-body code { font-size: 12px; }
-    .compare-card-footer { padding: 12px 20px; border-top: 1px solid #e7e5e4; }
-    .compare-low-tag {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
-      padding: 3px 8px; font-size: 11px; font-weight: 600; color: #b91c1c !important;
-      margin: 2px;
-    }
-    .compare-close-bar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
-      background: rgba(0,0,0,0.8); padding: 12px 24px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .compare-close-bar span { color: white !important; font-size: 14px; font-weight: 600; }
-    .compare-close-btn {
-      background: white; color: #1c1917 !important; border: none; border-radius: 8px;
-      padding: 8px 20px; font-weight: 700; font-size: 13px; cursor: pointer;
-    }
-
-        /* ===== STAGGER ANIMATIONS ===== */
+    /* ===== STAGGER ANIMATIONS ===== */
     .stagger-1 { animation-delay: 0.1s; }
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
@@ -1591,7 +1468,6 @@
         const renderedResp = renderMarkdown(respText);
         const responseHtml = `<div class="response-wrap${isLong ? ' scrollable' : ''}">${renderedResp}</div>`;
         return `<tr>
-          <td><input type="checkbox" class="compare-check" data-model="${r.model}" data-rank="${r.rank}" data-idx="${r.rank - 1}"></td>
           <td style="font-weight:700;">${medal}${r.rank}</td>
           <td class="model">${r.model}</td>
           <td class="metric-cell" style="background-color: ${scoreColor};">${scoreDetails}</td>
@@ -1601,30 +1477,6 @@
           <td>${responseHtml}</td>
         </tr>`;
       }).join('');
-
-      // Build compare data JSON for embedding
-      const compareDataJson = JSON.stringify(data.final_ranking.map(r => {
-        const lowScores = [];
-        if (data.criteria_detail) {
-          const detail = data.criteria_detail.find(d => d.model === r.model);
-          if (detail && data.evaluation_criteria) {
-            data.evaluation_criteria.forEach(c => {
-              const info = detail.criteria[c];
-              if (!info) return;
-              (info.reasons || []).forEach(reason => {
-                const obj = typeof reason === 'string' ? {text: reason, score: null} : reason;
-                if (obj.score != null && obj.score < 3) {
-                  lowScores.push({criterion: c, score: obj.score, text: obj.text});
-                }
-              });
-            });
-          }
-        }
-        return {
-          model: r.model, rank: r.rank, score: r.unified_score,
-          response: r.response_text || '', lowScores
-        };
-      }));
 
       const unanimous = data.winner.consensus;
       const totalCost = data.summary.total_cost;
@@ -1716,44 +1568,6 @@
         </table>`;
       }
 
-      // Build low scores summary table
-      let lowScoresHtml = '';
-      if (hasCriteria && data.criteria_detail && data.criteria_detail.length > 0) {
-        const lowItems = [];
-        data.criteria_detail.forEach(item => {
-          data.evaluation_criteria.forEach(c => {
-            const info = item.criteria[c];
-            if (!info) return;
-            const rawReasons = (info.reasons || []).filter(r => r && (typeof r === 'string' ? r.length > 0 : r.text));
-            rawReasons.forEach(r => {
-              const obj = typeof r === 'string' ? {text: r, score: null, is_supreme: false} : r;
-              if (obj.score != null && obj.score < 3) {
-                lowItems.push({
-                  model: item.model, criterion: c, score: obj.score,
-                  judge: obj.is_supreme ? 'Supreme' : 'Regular',
-                  text: obj.text
-                });
-              }
-            });
-          });
-        });
-        if (lowItems.length > 0) {
-          const lowRows = lowItems.map(li => {
-            const cls = li.score <= 1 ? 'low-score-1' : 'low-score-2';
-            const badge = `<span class="score-badge sb-${li.score}">${li.score}</span>`;
-            return `<tr class="${cls}"><td class="model">${li.model}</td><td>${li.criterion}</td><td style="text-align:center;">${badge}</td><td>${li.judge}</td><td style="max-width:400px;">${li.text}</td></tr>`;
-          }).join('');
-          lowScoresHtml = `
-          <div class="low-scores-section">
-            <h2>⚠️ Low Scores Detail (below 3/5)</h2>
-            <table class="low-scores-table">
-              <tr><th style="text-align:left;">Model</th><th style="text-align:left;">Criterion</th><th>Score</th><th style="text-align:left;">Judge</th><th style="text-align:left;">Justification</th></tr>
-              ${lowRows}
-            </table>
-          </div>`;
-        }
-      }
-
       return `<div class="header">
       ${labelTag}<h1>⚔️ Agent Clash — Evaluation Report</h1>
       <div class="subtitle">${data.final_ranking.length} models · ${data.summary.total_judges} judges${data.config.enable_supreme_court ? ' + ' + data.summary.total_supreme_judges + ' supreme' : ''} · ${new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</div>
@@ -1761,14 +1575,8 @@
     <div class="content">
       <div class="prompt-box">
         📝 <strong>Prompt</strong><br><br>
-        "${(() => { const parts = data.prompt.split('\n\n---\nData:\n'); return parts[0]; })()}"
+        "${data.prompt}"
       </div>
-      ${(() => {
-        const parts = data.prompt.split('\n\n---\nData:\n');
-        if (parts.length <= 1) return '';
-        const dsText = parts.slice(1).join('\n\n---\nData:\n');
-        return '<div class="dataset-box">📂 <strong>Dataset</strong><pre>' + dsText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div>';
-      })()}
       ${criteriaBadgesHtml}
       <div class="winner-section">
         <h2>🏆 CHAMPION</h2>
@@ -1789,11 +1597,9 @@
         ${matrixRows}
       </table>
       ${criteriaTableHtml}
-      ${lowScoresHtml}
       <h2>${rankingTitle}</h2>
-      <table class="ranking-table">
+      <table>
         <tr>
-          <th style="width:40px;"></th>
           <th>Rank</th>
           <th>Model</th>
           <th>Score</th>
@@ -1804,10 +1610,6 @@
         </tr>
         ${rankingRows}
       </table>
-      <div style="text-align:center;">
-        <button class="compare-btn" onclick="void(0)">📊 Compare Selected Responses</button>
-      </div>
-      <script type="application/json" class="compare-data" style="display:none;">${compareDataJson}</script>
       <div class="conclusions">
         <h2>🧠 Summary</h2>
         <ul>
@@ -2105,32 +1907,8 @@
     <div class="content">
       <div class="prompt-box">
         📝 <strong>Prompt</strong><br><br>
-        "${(() => { const parts = prompt.split('\n\n---\nData:\n'); return parts[0]; })()}"
+        "${prompt}"
       </div>
-      ${(() => {
-        const uniqueDS = [];
-        const seen = new Set();
-        allResponses.forEach(r => {
-          const parts = (r.prompt || '').split('\n\n---\nData:\n');
-          if (parts.length > 1) {
-            const ds = parts.slice(1).join('\n\n---\nData:\n').trim();
-            const key = ds.substring(0, 100);
-            if (!seen.has(key)) { seen.add(key); uniqueDS.push(ds); }
-          }
-        });
-        if (uniqueDS.length === 0) return '';
-        if (uniqueDS.length === 1) {
-          return '<div class="dataset-box">📂 <strong>Dataset</strong><pre>' + uniqueDS[0].replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div>';
-        }
-        const cards = uniqueDS.map((ds, i) =>
-          '<div class="dataset-card"><div class="ds-label">📂 Dataset ' + (i+1) + '</div><pre>' + ds.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></div>'
-        ).join('');
-        return '<div class="dataset-carousel"><div class="carousel-track">' + cards + '</div>'
-          + '<div class="carousel-nav">'
-          + '<button onclick="this.closest(\'.dataset-carousel\').querySelector(\'.carousel-track\').scrollBy({left:-340,behavior:\'smooth\'})">← Prev</button>'
-          + '<button onclick="this.closest(\'.dataset-carousel\').querySelector(\'.carousel-track\').scrollBy({left:340,behavior:\'smooth\'})">Next →</button>'
-          + '</div></div>';
-      })()}
 
       <div class="winner-section">
         <h2>🏆 OVERALL CHAMPION</h2>
@@ -2243,9 +2021,6 @@
       const [reports, setReports] = useState([]);
       const [activeReportId, setActiveReportId] = useState(null);
       const MAX_REPORTS = 20;
-      const [showCompare, setShowCompare] = useState(false);
-      const [compareData, setCompareData] = useState([]);
-      const reportRef = React.useRef(null);
       const [showSettings, setShowSettings] = useState(false);
       const [showPodium, setShowPodium] = useState(false);
       const [showProcess, setShowProcess] = useState(false);
@@ -2688,7 +2463,7 @@
           api_key: apiKey || null, friend_code: friendCode || null,
           enable_supreme_court: enableSupremeCourt
         };
-        const config = { prompt: promptBase, datasets: activeDataSets, totalRuns: totalRuns, models: selectedModels, temperature, max_tokens: maxTokens,
+        const config = { prompt: promptBase, models: selectedModels, temperature, max_tokens: maxTokens,
           enable_supreme_court: enableSupremeCourt, api_key_used: apiKey ? 'own' : 'friend' };
 
         // Label helper
@@ -2836,124 +2611,42 @@
         if (!activeReport || loading) return;
         if (!apiKey && !friendCode) { setError('Please enter your API key (step 3) to replay'); return; }
         const rc = activeReport.config;
-        const replayDatasets = rc.datasets && rc.datasets.length > 0 ? rc.datasets : [];
-        const replayRuns = rc.totalRuns || 1;
         setLoading(true); setError(null); setResult(null);
         setShowPodium(false); setShowConfetti(false); setResultData(null);
         if (window.BattleArena) window.BattleArena.show();
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
         try {
-          const promptBase = rc.prompt;
-          const hasMultiDS = replayDatasets.length > 1;
-          const basePayload = {
-            models: rc.models, temperature: rc.temperature,
-            max_tokens: rc.max_tokens, api_key: apiKey || null,
-            friend_code: friendCode || null, enable_supreme_court: rc.enable_supreme_court
-          };
-
-          // Build tasks: datasets × runs (same as handleSubmit)
-          const tasks = [];
-          if (replayDatasets.length === 0) {
-            for (let run = 1; run <= replayRuns; run++) {
-              tasks.push({ dsIdx: -1, run, fullPrompt: promptBase });
-            }
-          } else {
-            for (let dsIdx = 0; dsIdx < replayDatasets.length; dsIdx++) {
-              for (let run = 1; run <= replayRuns; run++) {
-                tasks.push({ dsIdx, run,
-                  fullPrompt: promptBase + '\n\n---\nData:\n' + replayDatasets[dsIdx].trim()
-                });
-              }
-            }
-          }
-
-          const getLabel = (dsIdx, run) => {
-            const parts = [];
-            if (hasMultiDS) parts.push('D' + (dsIdx + 1));
-            if (replayRuns > 1) parts.push('R' + run);
-            return parts.length > 0 ? parts.join('·') : null;
-          };
-
-          // Dispatch all in parallel
-          const runPromises = tasks.map(task =>
-            fetch(WEBHOOK_URL, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...basePayload, prompt: task.fullPrompt })
-            }).then(async (response) => {
-              if (!response.ok) {
-                let errMsg = 'HTTP Error: ' + response.status;
-                try { const b = await response.text(); try { const j = JSON.parse(b); errMsg = j.message || j.error || errMsg; } catch { if (b.length < 300) errMsg = b; } } catch {}
-                throw new Error(errMsg);
-              }
-              const rawText = await response.text();
-              if (!rawText) throw new Error('Empty response from server');
-              let jsonResponse;
-              try { jsonResponse = JSON.parse(rawText); } catch { throw new Error(rawText.slice(0, 300)); }
-              if (jsonResponse.error && jsonResponse.message) throw new Error(jsonResponse.message);
-              return { dsIdx: task.dsIdx, run: task.run, jsonResponse };
+          const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: rc.prompt, models: rc.models, temperature: rc.temperature,
+              max_tokens: rc.max_tokens, api_key: apiKey || null, friend_code: friendCode || null,
+              enable_supreme_court: rc.enable_supreme_court
             })
-          );
-
-          const results = await Promise.allSettled(runPromises);
-          const fulfilled = results.filter(r => r.status === 'fulfilled');
-          const rejected = results.filter(r => r.status === 'rejected');
-          if (fulfilled.length === 0 && rejected.length > 0) {
-            throw new Error(rejected[0].reason?.message || 'All replay runs failed');
-          }
-
-          if (window.BattleArena) window.BattleArena.hide();
-
-          const sorted = [...fulfilled].sort((a, b) => {
-            if (a.value.dsIdx !== b.value.dsIdx) return a.value.dsIdx - b.value.dsIdx;
-            return a.value.run - b.value.run;
           });
-
-          let lastRanking = null;
-          const allJsonResponses = [];
-          const battleId = Date.now();
-
-          for (const r of sorted) {
-            const { dsIdx, run, jsonResponse } = r.value;
-            const label = getLabel(dsIdx >= 0 ? dsIdx : 0, run);
-            jsonResponse._label = label;
-            jsonResponse._dsIdx = dsIdx;
-            allJsonResponses.push(jsonResponse);
-
-            const html = generateHTMLFromJSON(jsonResponse);
-            const ranking = extractRankingFromJSON(jsonResponse);
-            const newReport = {
-              id: battleId + (dsIdx >= 0 ? dsIdx : 0) * 100 + run,
-              battleId, timestamp: new Date(), html, jsonData: jsonResponse,
-              config: rc, runLabel: label,
-              winner: ranking && ranking[0] ? ranking[0].name : null
-            };
-            setReports(prev => [...prev, newReport].slice(-MAX_REPORTS));
-            setActiveReportId(newReport.id);
-            setResult(html);
-            if (ranking) lastRanking = ranking;
-          }
-
-          // Generate aggregate report if multiple evaluations
-          if (allJsonResponses.length > 1) {
-            const aggHtml = generateAggregateReport(allJsonResponses);
-            if (aggHtml) {
-              const dsCount = replayDatasets.length || 1;
-              const summaryLabel = hasMultiDS
-                ? '📊 Summary (' + dsCount + ' datasets' + (replayRuns > 1 ? ' × ' + replayRuns + ' runs' : '') + ')'
-                : '📊 Summary (' + replayRuns + ' runs)';
-              const aggReport = {
-                id: battleId + 999, battleId, timestamp: new Date(),
-                html: aggHtml, config: rc, runLabel: summaryLabel, isAggregate: true
-              };
-              setReports(prev => [...prev, aggReport].slice(-MAX_REPORTS));
-              setActiveReportId(aggReport.id);
-              setResult(aggHtml);
-              const aggRanking = extractAggregateRanking(allJsonResponses);
-              if (aggRanking) lastRanking = aggRanking;
+          if (!response.ok) {
+              let errMsg = `HTTP Error: ${response.status}`;
+              try {
+                const errBody = await response.text();
+                try { const j = JSON.parse(errBody); errMsg = j.message || j.error || errMsg; }
+                catch { if (errBody.length < 300) errMsg = errBody; }
+              } catch {}
+              throw new Error(errMsg);
             }
-          }
-
-          if (lastRanking) setResultData(lastRanking);
+          const rawText2 = await response.text();
+            if (!rawText2) throw new Error('Empty response from server');
+            let jsonResponse2;
+            try { jsonResponse2 = JSON.parse(rawText2); } catch { throw new Error(rawText2.slice(0, 300)); }
+            if (jsonResponse2.error && jsonResponse2.message) throw new Error(jsonResponse2.message);
+          if (window.BattleArena) window.BattleArena.hide();
+          const html = generateHTMLFromJSON(jsonResponse2);
+          const ranking2 = extractRankingFromJSON(jsonResponse2);
+          if (ranking2) setResultData(ranking2);
+          const newReport = { id: Date.now(), timestamp: new Date(), html, jsonData: jsonResponse2, config: rc, winner: ranking2 && ranking2[0] ? ranking2[0].name : null };
+          setReports(prev => [...prev, newReport].slice(-MAX_REPORTS));
+          setActiveReportId(newReport.id);
+          setResult(html);
           setTimeout(() => setShowPodium(true), 400);
           setTimeout(() => setShowConfetti(true), 1200);
           setTimeout(() => setShowConfetti(false), 5000);
@@ -2963,73 +2656,10 @@
           const msg = err.message || '';
           const isAuthErr = /authorization|credential|api.?key|user not found|invalid.*key/i.test(msg);
           if (isAuthErr) setCredError(true);
-          setError('Replay failed: ' + msg);
+          setError(`Replay failed: ${msg}`);
           setTimeout(() => setError(null), 12000);
         } finally { setLoading(false); }
       };
-
-      // Tooltip positioning + Compare button event delegation
-      useEffect(() => {
-        const wrapper = reportRef.current;
-        if (!wrapper) return;
-
-        // Tooltip positioning (fixed)
-        const handleMouseEnter = (e) => {
-          const wrap = e.target.closest('.criteria-reason-wrap');
-          if (!wrap) return;
-          const tooltip = wrap.querySelector('.criteria-tooltip');
-          if (!tooltip) return;
-          const rect = wrap.getBoundingClientRect();
-          tooltip.style.display = 'block';
-          tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
-          tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
-          // Keep within viewport
-          const tr = tooltip.getBoundingClientRect();
-          if (tr.left < 8) tooltip.style.left = '8px';
-          if (tr.right > window.innerWidth - 8) tooltip.style.left = (window.innerWidth - tr.width - 8) + 'px';
-          if (tr.top < 8) { tooltip.style.top = rect.bottom + 10 + 'px'; }
-        };
-        const handleMouseLeave = (e) => {
-          const wrap = e.target.closest('.criteria-reason-wrap');
-          if (!wrap) return;
-          const tooltip = wrap.querySelector('.criteria-tooltip');
-          if (tooltip) tooltip.style.display = 'none';
-        };
-
-        wrapper.addEventListener('mouseover', (e) => {
-          if (e.target.closest('.criteria-reason-wrap')) handleMouseEnter(e);
-        });
-        wrapper.addEventListener('mouseout', (e) => {
-          if (e.target.closest('.criteria-reason-wrap')) handleMouseLeave(e);
-        });
-
-        // Compare checkboxes
-        wrapper.addEventListener('change', (e) => {
-          if (!e.target.classList.contains('compare-check')) return;
-          const checks = wrapper.querySelectorAll('.compare-check:checked');
-          const btn = wrapper.querySelector('.compare-btn');
-          if (btn) btn.style.display = checks.length >= 2 ? 'block' : 'none';
-        });
-
-        // Compare button click
-        wrapper.addEventListener('click', (e) => {
-          if (!e.target.closest('.compare-btn')) return;
-          const dataEl = wrapper.querySelector('.compare-data');
-          if (!dataEl) return;
-          try {
-            const allData = JSON.parse(dataEl.textContent);
-            const checks = wrapper.querySelectorAll('.compare-check:checked');
-            const selectedModels = Array.from(checks).map(c => c.getAttribute('data-model'));
-            const selected = allData.filter(d => selectedModels.includes(d.model));
-            if (selected.length >= 2) {
-              setCompareData(selected);
-              setShowCompare(true);
-            }
-          } catch (err) { console.error('Compare parse error:', err); }
-        });
-
-        return () => {};
-      }, [activeReportId, result]);
 
       // Confetti renderer
       const ConfettiEffect = () => {
@@ -4267,42 +3897,9 @@
 
                 {/* Report display */}
                 {activeReportId && reports.find(r => r.id === activeReportId) && (
-                  <div className="report-wrapper" ref={reportRef}
+                  <div className="report-wrapper"
                     dangerouslySetInnerHTML={{ __html: reports.find(r => r.id === activeReportId).html }}
                   />
-                )}
-                {showCompare && compareData.length > 0 && (
-                  <div className="compare-overlay" onClick={(e) => { if (e.target.classList.contains('compare-overlay')) { setShowCompare(false); setCompareData([]); }}}>
-                    <div className="compare-close-bar">
-                      <span>Comparing {compareData.length} models</span>
-                      <button className="compare-close-btn" onClick={() => { setShowCompare(false); setCompareData([]); }}>✕ Close</button>
-                    </div>
-                    <div className="compare-container" style={{ marginTop: '56px' }}>
-                      {compareData.map((item, i) => {
-                        const medals = ['🥇','🥈','🥉'];
-                        const medal = item.rank <= 3 ? medals[item.rank-1] : '#' + item.rank;
-                        return (
-                          <div key={i} className="compare-card">
-                            <div className="compare-card-header">
-                              <div className="cc-rank">{medal}</div>
-                              <div className="cc-model">{item.model}</div>
-                              <div className="cc-score">Score: {Math.round(item.score)}</div>
-                            </div>
-                            <div className="compare-card-body"
-                              dangerouslySetInnerHTML={{ __html: window.marked ? window.marked.parse(item.response || '') : (item.response || '') }}
-                            />
-                            {item.lowScores && item.lowScores.length > 0 && (
-                              <div className="compare-card-footer">
-                                {item.lowScores.map((ls, j) => (
-                                  <span key={j} className="compare-low-tag">{ls.criterion}: {ls.score}/5</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 )}
               </div>
             )}
